@@ -180,7 +180,7 @@ class Stage {
                     continue;
                 }
                 // そのぷよのまわりのぷよも消せるか確認する
-                
+                checkSequentialPuyo(dx, dy);
                 
             };
         };
