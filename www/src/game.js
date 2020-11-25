@@ -1,9 +1,8 @@
-import { Config } from  "./config.js";
 import { PuyoImage } from "./puyoimage.js";
 import { Stage } from "./stage.js";
 import { Player } from "./player.js";
-import { Score } from "./score.js";
 import { InitialState } from "./gamestate.js";
+import { Renderer } from "./renderer.js";
 
 // 起動されたときに呼ばれる関数を登録する
 window.addEventListener("load", () => {
@@ -15,6 +14,12 @@ window.addEventListener("load", () => {
 });
 
 let state = new InitialState();
+const stageSize = {
+        cols: 6,
+        rows: 12,
+}
+const fontHeight = 33;
+const renderer = new Renderer(stageSize, fontHeight);
 
 function initialize() {
     // 画像を準備する
@@ -23,8 +28,9 @@ function initialize() {
     Stage.initialize();
     // ユーザー操作の準備をする
     Player.initialize();
-    // シーンを初期状態にセットする
-    Score.initialize();
+
+    renderer.firstRender();
+    state.addScoreObserver(renderer);
 }
 
 function loop() {

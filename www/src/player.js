@@ -1,5 +1,4 @@
 import { Config } from  "./config.js";
-import { Score } from "./score.js";
 import { Stage } from "./stage.js";
 import { PuyoImage } from "./puyoimage.js";
 
@@ -200,7 +199,7 @@ export class Player {
                 // ブロックの境を超えたので、再チェックする
                 // 下キーが押されていたら、得点を加算する
                 if(isDownPressed) {
-                    Score.addScore(1);
+                    // Score.addScore(1);
                 }
                 y += 1;
                 this.puyoStatus.y = y;

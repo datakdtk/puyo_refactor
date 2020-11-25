@@ -39,13 +39,6 @@ export class Stage {
         this.zenkeshiImage = zenkeshiImage;
         stageElement.appendChild(zenkeshiImage);
 
-        const scoreElement = document.getElementById("score");
-        scoreElement.style.backgroundColor = Config.scoreBackgroundColor;
-        scoreElement.style.top = Config.puyoImgHeight * Config.stageRows + 'px';
-        scoreElement.style.width = Config.puyoImgWidth * Config.stageCols + 'px';
-        scoreElement.style.height = Config.fontHeight + "px";
-        this.scoreElement = scoreElement;
-
         // メモリを準備する
         this.board = [
             [0, 0, 0, 0, 0, 0],

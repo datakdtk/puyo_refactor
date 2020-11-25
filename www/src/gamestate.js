@@ -1,15 +1,27 @@
 import { PuyoImage } from "./puyoimage.js";
 import { Stage } from "./stage.js";
 import { Player } from "./player.js";
-import { Score } from "./score.js";
+import { zenkeshiBonus, calculatePoppingScore } from "./score.js";
 
 class AbstractState {
     frame = 0;
     rensaCount = 0;
+    score = 0;
+
+    scoreObservers = [];
+
 
     constructor(previous) {
         this.frame = previous.frame + 1;
         this.rensaCount = previous.rensaCount;
+        this.score = previous.score;
+
+        this.scoreObservers = previous.scoreObservers;
+    }
+
+    addScore(additionalAmount) {
+        this.score += additionalAmount;
+        this.scoreObservers.forEach(o => o.updateScore(this.score))
     }
 
     nextState() {
@@ -20,9 +32,12 @@ class AbstractState {
 export class InitialState {
     frame = 0;
     rensaCount = 0;
+    score = 0;
 
-    constructor() {
-        // do nothing
+    scoreObservers = [];
+
+    addScoreObserver(observer) {
+        this.scoreObservers.push(observer);
     }
 
     nextState() {
@@ -95,14 +110,14 @@ function checkErase(state) {
     if (eraseInfo) {
         state.rensaCount++;
         // 得点を計算する
-        Score.calculateScore(state.rensaCount, eraseInfo.piece, eraseInfo.color);
+        state.addScore(calculatePoppingScore(state.rensaCount, eraseInfo.piece, eraseInfo.color));
         Stage.hideZenkeshi();
         return new Erasing(state);
     } else {
         if (Stage.puyoCount === 0 && state.rensaCount > 0) {
             // 全消しの処理をする
             Stage.showZenkeshi();
-            Score.addScore(3600);
+            state.addScore(zenkeshiBonus);
         }
         state.rensaCount = 0;
         // 消せなかったら、新しいぷよを登場させる
