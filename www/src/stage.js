@@ -1,4 +1,7 @@
-class Stage {
+import { Config } from  "./config.js";
+import { PuyoImage } from "./puyoimage.js";
+
+export class Stage {
     // static stageElement;
     // static scoreElement;
     // static zenkeshiImage;
@@ -7,6 +10,9 @@ class Stage {
     // static fallingPuyoList = [];
     // static eraseStartFrame;
     // static erasingPuyoInfoList = [];
+    
+    static fallingPuyoList = [];
+    static erasingPuyoInfoList = [];
 
     static initialize() {
         // HTML からステージの元となる要素を取得し、大きさを設定する
@@ -289,5 +295,3 @@ class Stage {
         animation();
     }
 }
-Stage.fallingPuyoList = [];
-Stage.erasingPuyoInfoList = [];

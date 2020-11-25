@@ -1,4 +1,7 @@
-class PuyoImage {
+import { Config } from  "./config.js";
+import { Stage } from  "./stage.js";
+
+export class PuyoImage {
 
     // static puyoImages;
     // static batankyuImage;
