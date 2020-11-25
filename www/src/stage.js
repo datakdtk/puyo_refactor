@@ -21,6 +21,16 @@ export class Stage {
         stageElement.style.height = Config.puyoImgHeight * Config.stageRows + 'px';
         stageElement.style.backgroundColor = Config.stageBackgroundColor;
         this.stageElement = stageElement;
+
+        const nextElement = document.getElementById("next");
+        nextElement.style.width = Config.puyoImgWidth + 'px';
+        nextElement.style.height = Config.puyoImgHeight * 2 + 'px';
+        this.nextElement = nextElement;
+
+        const nextnextElement = document.getElementById("next-next");
+        nextnextElement.style.width = Config.puyoImgWidth + 'px';
+        nextnextElement.style.height = Config.puyoImgHeight * 2 + 'px';
+        this.nextnextElement = nextnextElement;
         
         const zenkeshiImage = document.getElementById("zenkeshi");
         zenkeshiImage.width = Config.puyoImgWidth * 6;
