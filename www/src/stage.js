@@ -15,29 +15,14 @@ export class Stage {
     static erasingPuyoInfoList = [];
 
     static initialize() {
-        // HTML からステージの元となる要素を取得し、大きさを設定する
-        const stageElement = document.getElementById("stage");
-        stageElement.style.width = Config.puyoImgWidth * Config.stageCols + 'px';
-        stageElement.style.height = Config.puyoImgHeight * Config.stageRows + 'px';
-        stageElement.style.backgroundColor = Config.stageBackgroundColor;
-        this.stageElement = stageElement;
-
-        const nextElement = document.getElementById("next");
-        nextElement.style.width = Config.puyoImgWidth + 'px';
-        nextElement.style.height = Config.puyoImgHeight * 2 + 'px';
-        this.nextElement = nextElement;
-
-        const nextnextElement = document.getElementById("next-next");
-        nextnextElement.style.width = Config.puyoImgWidth + 'px';
-        nextnextElement.style.height = Config.puyoImgHeight * 2 + 'px';
-        this.nextnextElement = nextnextElement;
+        this.stageElement = document.getElementById("stage");
         
         const zenkeshiImage = document.getElementById("zenkeshi");
         zenkeshiImage.width = Config.puyoImgWidth * 6;
         zenkeshiImage.style.position = 'absolute';
         zenkeshiImage.style.display = 'none';        
         this.zenkeshiImage = zenkeshiImage;
-        stageElement.appendChild(zenkeshiImage);
+        this.stageElement.appendChild(zenkeshiImage);
 
         // メモリを準備する
         this.board = [

@@ -13,9 +13,6 @@ export class Config {
     static puyoImgHeight = (window.innerHeight - this.fontHeight) / this.stageRows
     static puyoImgWidth = Config.puyoImgHeight;
 
-    static stageBackgroundColor = '#ffffff'; // ステージの背景色
-    static scoreBackgroundColor = '#24c0bb'; // スコアの背景色
-
     static freeFallingSpeed = 16; // 自由落下のスピード
     static erasePuyoCount = 4; // 何個以上揃ったら消えるか
     static eraseAnimationDuration = 30; // 何フレームでぷよを消すか

@@ -1,17 +1,17 @@
+const stageBackgroundColor = '#ffffff'; // ステージの背景色
 const scoreBackgroundColor = '#24c0bb'; // スコアの背景色
 
 export class Renderer {
     constructor(stageSize, fontHeight) {
         this.puyoSize = (window.innerHeight - fontHeight) / stageSize.rows;
         this.scoreRenderer = new ScoreRenderer(stageSize, this.puyoSize, fontHeight);
+        this.stageRenderer = new StageRenderer(stageSize, this.puyoSize);
+        
     }
 
     firstRender() {
         this.scoreRenderer.firstRender();
-    }
-
-    updateScore(newScore) {
-        this.scoreRenderer.updateScore(newScore);
+        this.stageRenderer.firstRender();
     }
 }
 
@@ -64,4 +64,29 @@ class ScoreRenderer {
         }
     }
 
+}
+
+
+class StageRenderer {
+
+    constructor(stageSize, puyoSize) {
+        this.stageSize = stageSize;
+        this.puyoSize = puyoSize;
+    }
+
+    firstRender() {
+        // HTML からステージの元となる要素を取得し、大きさを設定する
+        const stageElement = document.getElementById("stage");
+        stageElement.style.width = this.puyoSize * this.stageSize.cols + 'px';
+        stageElement.style.height = this.puyoSize * this.stageSize.rows + 'px';
+        stageElement.style.backgroundColor = stageBackgroundColor;
+
+        const nextElement = document.getElementById("next");
+        nextElement.style.width = this.puyoSize + 'px';
+        nextElement.style.height = this.puyoSize * 2 + 'px';
+
+        const nextnextElement = document.getElementById("next-next");
+        nextnextElement.style.width = this.puyoSize + 'px';
+        nextnextElement.style.height = this.puyoSize * 2 + 'px';
+    }
 }

@@ -30,7 +30,7 @@ function initialize() {
     Player.initialize();
 
     renderer.firstRender();
-    state.addScoreObserver(renderer);
+    state.addScoreObserver(renderer.scoreRenderer);
 }
 
 function loop() {
