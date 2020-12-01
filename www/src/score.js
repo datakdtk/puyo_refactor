@@ -5,9 +5,9 @@ const colorBonuses = [0, 0, 3, 6, 12, 24];
 export const zenkeshiBonus = 3600;
 
 export function calculatePoppingScore(rensa, piece, color) {
-    rensa = Math.min(rensa, Score.rensaBonus.length - 1);
-    piece = Math.min(piece, Score.pieceBonus.length - 1);
-    color = Math.min(color, Score.colorBonus.length - 1);
-    const scale = Score.rensaBonus[rensa] + Score.pieceBonus[piece] + Score.colorBonus[color];
+    rensa = Math.min(rensa, rensaBonuses.length - 1);
+    piece = Math.min(piece, pieceBonuses.length - 1);
+    color = Math.min(color, colorBonuses.length - 1);
+    const scale = rensaBonuses[rensa] + pieceBonuses[piece] + colorBonuses[color];
     return Math.max(scale, 1) * piece * 10;
 }
