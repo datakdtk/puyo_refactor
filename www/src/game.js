@@ -3,6 +3,7 @@ import { Stage } from "./stage.js";
 import { Player } from "./player.js";
 import { InitialState } from "./gamestate.js";
 import { Renderer } from "./renderer.js";
+import { SingletonContainer } from "./singleton.js";
 
 // 起動されたときに呼ばれる関数を登録する
 window.addEventListener("load", () => {
@@ -28,6 +29,8 @@ function initialize() {
     Stage.initialize();
     // ユーザー操作の準備をする
     Player.initialize();
+
+    SingletonContainer.initialize(renderer.puyoSize);
 
     renderer.firstRender();
     state.addScoreObserver(renderer.scoreRenderer);
