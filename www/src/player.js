@@ -1,6 +1,7 @@
 import { Config } from  "./config.js";
 import { Stage } from "./stage.js";
 import { PuyoImage } from "./puyoimage.js";
+import { SingletonContainer } from "./singleton.js";
 
 export class Player {
     // static centerPuyo;
@@ -143,10 +144,12 @@ export class Player {
             // 空白でない場合は新しいぷよを置けない
             return false;
         }
+
         // 新しいぷよの色を決める
-        const puyoColors = Math.max(1, Math.min(5, Config.puyoColors));
-        this.centerPuyo = Math.floor(Math.random() * puyoColors) + 1;
-        this.movablePuyo = Math.floor(Math.random() * puyoColors) + 1;
+        SingletonContainer.tsumoGenerator.proceed();
+        const tsumo = SingletonContainer.tsumoGenerator.getCurrentTsumo();
+        this.centerPuyo = tsumo.jikuColor;
+        this.movablePuyo = tsumo.dependentColor;
         // 新しいぷよ画像を作成する
         this.centerPuyoElement = PuyoImage.getPuyo(this.centerPuyo);
         this.movablePuyoElement = PuyoImage.getPuyo(this.movablePuyo);
