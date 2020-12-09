@@ -39,7 +39,6 @@ export class TsumoGenerator {
         this.puyoSize = puyoSize;
         this._createNewTsumoUnit;
         // TODO 初手が3色以下になるようにツモ補正
-        console.log(this);
     }
 
     addOvserver(ov) {
@@ -53,7 +52,7 @@ export class TsumoGenerator {
         if (this.tsumoColorSet.length < this.moveCount * 2 + 3) {
             this._createNewTsumoUnit();
         }
-        this.observers.forEach(o => o.updateTsumo(this.score))
+        this.observers.forEach(o => o.updateTsumo(this))
     }
 
     getCurrentTsumo() {

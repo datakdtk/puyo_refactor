@@ -6,7 +6,7 @@ export class Renderer {
         this.puyoSize = (window.innerHeight - fontHeight) / stageSize.rows;
         this.scoreRenderer = new ScoreRenderer(stageSize, this.puyoSize, fontHeight);
         this.stageRenderer = new StageRenderer(stageSize, this.puyoSize);
-        
+        this.tsumoRenderer = new TsumoRenderer();
     }
 
     firstRender() {
@@ -89,4 +89,20 @@ class StageRenderer {
         nextnextElement.style.width = this.puyoSize + 'px';
         nextnextElement.style.height = this.puyoSize * 2 + 'px';
     }
+}
+
+class TsumoRenderer {
+    updateTsumo(tsumoGenerator) {
+        const next = tsumoGenerator.getNextTsumo();
+        document.getElementById("next-jiku-puyo").src = imageSorcePath(next.jikuColor);
+        document.getElementById("next-dependent-puyo").src = imageSorcePath(next.dependentColor);
+  
+        const nextnext = tsumoGenerator.getNextNextTsumo();
+        document.getElementById("next-next-jiku-puyo").src = imageSorcePath(nextnext.jikuColor);
+        document.getElementById("next-next-dependent-puyo").src = imageSorcePath(nextnext.dependentColor);
+    }
+}
+
+function imageSorcePath(colorInt) {
+    return `./img/puyo_${colorInt}.png`
 }

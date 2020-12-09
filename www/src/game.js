@@ -34,6 +34,7 @@ function initialize() {
 
     renderer.firstRender();
     state.addScoreObserver(renderer.scoreRenderer);
+    SingletonContainer.tsumoGenerator.addOvserver(renderer.tsumoRenderer);
 }
 
 function loop() {
