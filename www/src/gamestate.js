@@ -1,5 +1,5 @@
 import { PuyoImage } from "./puyoimage.js";
-import { Stage } from "./stage.js";
+import { StaticStage } from "./stage.js";
 import { Player } from "./player.js";
 import { zenkeshiBonus, calculatePoppingScore } from "./score.js";
 
@@ -47,13 +47,13 @@ export class InitialState {
 
 class Falling extends AbstractState {
     nextState() {
-        return Stage.fall() ? new Falling(this) : checkErase(this);
+        return StaticStage.fall() ? new Falling(this) : checkErase(this);
     }
 }
 
 class Erasing extends AbstractState {
     nextState() {
-        return Stage.erasing(this.frame) ? new Erasing(this) : checkFall(this);
+        return StaticStage.erasing(this.frame) ? new Erasing(this) : checkFall(this);
     }
 }
 
@@ -102,21 +102,21 @@ class Batankyu extends AbstractState {
 }
 
 function checkFall(state) {
-    return Stage.checkFall() ? new Falling(state) : checkErase(state);
+    return StaticStage.checkFall() ? new Falling(state) : checkErase(state);
 }
 
 function checkErase(state) {
-    const eraseInfo = Stage.checkErase(state.frame);
+    const eraseInfo = StaticStage.checkErase(state.frame);
     if (eraseInfo) {
         state.rensaCount++;
         // “¾“_‚ğŒvZ‚·‚é
         state.addScore(calculatePoppingScore(state.rensaCount, eraseInfo.piece, eraseInfo.color));
-        Stage.hideZenkeshi();
+        StaticStage.hideZenkeshi();
         return new Erasing(state);
     } else {
-        if (Stage.puyoCount === 0 && state.rensaCount > 0) {
+        if (StaticStage.puyoCount === 0 && state.rensaCount > 0) {
             // ‘SÁ‚µ‚Ìˆ—‚ğ‚·‚é
-            Stage.showZenkeshi();
+            StaticStage.showZenkeshi();
             state.addScore(zenkeshiBonus);
         }
         state.rensaCount = 0;

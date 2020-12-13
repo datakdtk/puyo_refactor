@@ -5,7 +5,7 @@ export class Renderer {
     constructor(stageSize, fontHeight) {
         this.puyoSize = (window.innerHeight - fontHeight) / stageSize.rows;
         this.scoreRenderer = new ScoreRenderer(stageSize, this.puyoSize, fontHeight);
-        this.stageRenderer = new StageRenderer(stageSize, this.puyoSize);
+        this.stageRenderer = new StaticStageRenderer(stageSize, this.puyoSize);
         this.tsumoRenderer = new TsumoRenderer();
     }
 
@@ -67,7 +67,7 @@ class ScoreRenderer {
 }
 
 
-class StageRenderer {
+class StaticStageRenderer {
 
     constructor(stageSize, puyoSize) {
         this.stageSize = stageSize;

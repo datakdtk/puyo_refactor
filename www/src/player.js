@@ -1,5 +1,5 @@
 import { Config } from  "./config.js";
-import { Stage } from "./stage.js";
+import { StaticStage } from "./stage.js";
 import { PuyoImage } from "./puyoimage.js";
 import { SingletonContainer } from "./singleton.js";
 
@@ -140,7 +140,7 @@ export class Player {
     //ぷよ設置確認
     static createNewPuyo () {
         // ぷよぷよが置けるかどうか、1番上の段の左から3つ目を確認する
-        if(Stage.board[0][2]) {
+        if(StaticStage.board[0][2]) {
             // 空白でない場合は新しいぷよを置けない
             return false;
         }
@@ -153,8 +153,8 @@ export class Player {
         // 新しいぷよ画像を作成する
         this.centerPuyoElement = PuyoImage.getPuyo(this.centerPuyo);
         this.movablePuyoElement = PuyoImage.getPuyo(this.movablePuyo);
-        Stage.stageElement.appendChild(this.centerPuyoElement);
-        Stage.stageElement.appendChild(this.movablePuyoElement);
+        StaticStage.stageElement.appendChild(this.centerPuyoElement);
+        StaticStage.stageElement.appendChild(this.movablePuyoElement);
         // ぷよの初期配置を定める
         this.puyoStatus = {
             x: 2, // 中心ぷよの位置: 左から2列目
@@ -188,7 +188,7 @@ export class Player {
         let y = this.puyoStatus.y;
         let dx = this.puyoStatus.dx;
         let dy = this.puyoStatus.dy;
-        if(y + 1 >= Config.stageRows || Stage.board[y + 1][x] || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || Stage.board[y + dy + 1][x + dx]))) {
+        if(y + 1 >= Config.stageRows || StaticStage.board[y + 1][x] || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || StaticStage.board[y + dy + 1][x + dx]))) {
             isBlocked = true;
         }
         if(!isBlocked) {
@@ -206,7 +206,7 @@ export class Player {
                 }
                 y += 1;
                 this.puyoStatus.y = y;
-                if(y + 1 >= Config.stageRows || Stage.board[y + 1][x] || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || Stage.board[y + dy + 1][x + dx]))) {
+                if(y + 1 >= Config.stageRows || StaticStage.board[y + 1][x] || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || StaticStage.board[y + dy + 1][x + dx]))) {
                     isBlocked = true;
                 }
                 if(!isBlocked) {
@@ -256,24 +256,24 @@ export class Player {
             // その方向にブロックがないことを確認する
             // まずは自分の左右を確認
             let canMove = true;
-            if(y < 0 || x + cx < 0 || x + cx >= Config.stageCols || Stage.board[y][x + cx]) {
+            if(y < 0 || x + cx < 0 || x + cx >= Config.stageCols || StaticStage.board[y][x + cx]) {
                 if(y >= 0) {
                     canMove = false;
                 }
             }
-            if(my < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || Stage.board[my][mx + cx]) {
+            if(my < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || StaticStage.board[my][mx + cx]) {
                 if(my >= 0) {
                     canMove = false;
                 }
             }
             // 接地していない場合は、さらに1個下のブロックの左右も確認する
             if(this.groundFrame === 0) {
-                if(y + 1 < 0 || x + cx < 0 || x + cx >= Config.stageCols || Stage.board[y + 1][x + cx]) {
+                if(y + 1 < 0 || x + cx < 0 || x + cx >= Config.stageCols || StaticStage.board[y + 1][x + cx]) {
                     if(y + 1 >= 0) {
                         canMove = false;
                     }
                 }
-                if(my + 1 < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || Stage.board[my + 1][mx + cx]) {
+                if(my + 1 < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || StaticStage.board[my + 1][mx + cx]) {
                     if(my + 1 >= 0) {
                         canMove = false;
                     }
@@ -304,7 +304,7 @@ export class Player {
                 // 右から上には100% 確実に回せる。何もしない
             } else if(rotation === 90) {
                 // 上から左に回すときに、左にブロックがあれば右に移動する必要があるのでまず確認する
-                if(y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || Stage.board[y + 1][x - 1]) {
+                if(y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || StaticStage.board[y + 1][x - 1]) {
                     if(y + 1 >= 0) {
                         // ブロックがある。右に1個ずれる
                         cx = 1;
@@ -312,7 +312,7 @@ export class Player {
                 }
                 // 右にずれる必要がある時、右にもブロックがあれば回転出来ないので確認する
                 if(cx === 1) {
-                    if(y + 1 < 0 || x + 1 < 0 || y + 1 >= Config.stageRows || x + 1 >= Config.stageCols || Stage.board[y + 1][x + 1]) {
+                    if(y + 1 < 0 || x + 1 < 0 || y + 1 >= Config.stageRows || x + 1 >= Config.stageCols || StaticStage.board[y + 1][x + 1]) {
                         if(y + 1 >= 0) {
                             // ブロックがある。回転出来なかった
                             canRotate = false;
@@ -321,14 +321,14 @@ export class Player {
                 }
             } else if(rotation === 180) {
                 // 左から下に回す時には、自分の下か左下にブロックがあれば1個上に引き上げる。まず下を確認する
-                if(y + 2 < 0 || y + 2 >= Config.stageRows || Stage.board[y + 2][x]) {
+                if(y + 2 < 0 || y + 2 >= Config.stageRows || StaticStage.board[y + 2][x]) {
                     if(y + 2 >= 0) {
                         // ブロックがある。上に引き上げる
                         cy = -1;
                     }
                 }
                 // 左下も確認する
-                if(y + 2 < 0 || y + 2 >= Config.stageRows || x - 1 < 0 || Stage.board[y + 2][x - 1]) {
+                if(y + 2 < 0 || y + 2 >= Config.stageRows || x - 1 < 0 || StaticStage.board[y + 2][x - 1]) {
                     if(y + 2 >= 0) {
                         // ブロックがある。上に引き上げる
                         cy = -1;
@@ -336,7 +336,7 @@ export class Player {
                 }
             } else if(rotation === 270) {
                 // 下から右に回すときは、右にブロックがあれば左に移動する必要があるのでまず確認する
-                if(y + 1 < 0 || x + 1 < 0 || x + 1 >= Config.stageCols || Stage.board[y + 1][x + 1]) {
+                if(y + 1 < 0 || x + 1 < 0 || x + 1 >= Config.stageCols || StaticStage.board[y + 1][x + 1]) {
                     if(y + 1 >= 0) {
                         // ブロックがある。左に1個ずれる
                         cx = -1;
@@ -344,7 +344,7 @@ export class Player {
                 }
                 // 左にずれる必要がある時、左にもブロックがあれば回転出来ないので確認する
                 if(cx === -1) {
-                    if(y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || Stage.board[y + 1][x - 1]) {
+                    if(y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || StaticStage.board[y + 1][x - 1]) {
                         if(y + 1 >= 0) {
                             // ブロックがある。回転出来なかった
                             canRotate = false;
@@ -413,17 +413,17 @@ export class Player {
         const dy = this.puyoStatus.dy;
         if(y >= 0) {
             // 画面外のぷよは消してしまう
-            Stage.setPuyo(x, y, this.centerPuyo);
-            Stage.puyoCount++;
+            StaticStage.setPuyo(x, y, this.centerPuyo);
+            StaticStage.puyoCount++;
         }
         if(y + dy >= 0) {
             // 画面外のぷよは消してしまう
-            Stage.setPuyo(x + dx, y + dy, this.movablePuyo);
-            Stage.puyoCount++;
+            StaticStage.setPuyo(x + dx, y + dy, this.movablePuyo);
+            StaticStage.puyoCount++;
         }
         // 操作用に作成したぷよ画像を消す
-        Stage.stageElement.removeChild(this.centerPuyoElement);
-        Stage.stageElement.removeChild(this.movablePuyoElement);
+        StaticStage.stageElement.removeChild(this.centerPuyoElement);
+        StaticStage.stageElement.removeChild(this.movablePuyoElement);
         this.centerPuyoElement = null;
         this.movablePuyoElement = null;
     }

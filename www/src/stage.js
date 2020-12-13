@@ -1,7 +1,7 @@
 import { Config } from  "./config.js";
 import { PuyoImage } from "./puyoimage.js";
 
-export class Stage {
+export class StaticStage {
     // static stageElement;
     // static scoreElement;
     // static zenkeshiImage;

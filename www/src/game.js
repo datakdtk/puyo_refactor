@@ -1,5 +1,5 @@
 import { PuyoImage } from "./puyoimage.js";
-import { Stage } from "./stage.js";
+import { StaticStage } from "./stage.js";
 import { Player } from "./player.js";
 import { InitialState } from "./gamestate.js";
 import { Renderer } from "./renderer.js";
@@ -26,7 +26,7 @@ function initialize() {
     // 画像を準備する
     PuyoImage.initialize();
     // ステージを準備する
-    Stage.initialize();
+    StaticStage.initialize();
     // ユーザー操作の準備をする
     Player.initialize();
 

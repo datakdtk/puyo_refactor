@@ -1,5 +1,5 @@
 import { Config } from  "./config.js";
-import { Stage } from  "./stage.js";
+import { StaticStage } from  "./stage.js";
 
 export class PuyoImage {
 
@@ -29,7 +29,7 @@ export class PuyoImage {
 
     static prepareBatankyu(frame) {
         this.gameOverFrame = frame;
-        Stage.stageElement.appendChild(this.batankyuImage);
+        StaticStage.stageElement.appendChild(this.batankyuImage);
         this.batankyuImage.style.top = -this.batankyuImage.height + 'px';
     }
 
