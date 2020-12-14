@@ -1,11 +1,13 @@
+import { puyoSize, stageCols, stageRows, fontHeight } from "./config.js";
+import { StagePuyo } from "./puyo.js";
+
 const stageBackgroundColor = '#ffffff'; // ステージの背景色
 const scoreBackgroundColor = '#24c0bb'; // スコアの背景色
 
 export class Renderer {
-    constructor(stageSize, fontHeight) {
-        this.puyoSize = (window.innerHeight - fontHeight) / stageSize.rows;
-        this.scoreRenderer = new ScoreRenderer(stageSize, this.puyoSize, fontHeight);
-        this.stageRenderer = new StaticStageRenderer(stageSize, this.puyoSize);
+    constructor() {
+        this.scoreRenderer = new ScoreRenderer();
+        this.stageRenderer = new StageRenderer();
         this.tsumoRenderer = new TsumoRenderer();
     }
 
@@ -19,10 +21,7 @@ class ScoreRenderer {
     fontTemplateList = []
 
 
-    constructor(stageSize, puyoSize, fontHeight) {
-        this.stageSize = stageSize;
-        this.puyoSize = puyoSize;
-        this.fontHeight = fontHeight;
+    constructor() {
         this.scoreElement = document.getElementById("score");
 
         let fontWidth = 0;
@@ -36,14 +35,14 @@ class ScoreRenderer {
             this.fontTemplateList.push(fontImage);
         }
 
-        this.fontLength = Math.floor(stageSize.cols * puyoSize / this.fontTemplateList[0].width);
+        this.fontLength = Math.floor(stageCols * puyoSize / this.fontTemplateList[0].width);
     }
 
     firstRender() {
         this.scoreElement.style.backgroundColor = scoreBackgroundColor;
-        this.scoreElement.style.top = this.puyoSize.height * this.stageSize.rows + 'px';
-        this.scoreElement.style.width = this.puyoSize.width * this.stageSize.cols + 'px';
-        this.scoreElement.style.height = this.fontHeight + "px";
+        this.scoreElement.style.top = puyoSize * stageRows + 'px';
+        this.scoreElement.style.width = puyoSize * stageCols + 'px';
+        this.scoreElement.style.height = fontHeight + "px";
         this.updateScore(0);
     }
 
@@ -67,28 +66,80 @@ class ScoreRenderer {
 }
 
 
-class StaticStageRenderer {
+class StageRenderer {
+    constructor() {
+        this.stageElement = document.getElementById("stage");
 
-    constructor(stageSize, puyoSize) {
-        this.stageSize = stageSize;
-        this.puyoSize = puyoSize;
     }
 
     firstRender() {
         // HTML からステージの元となる要素を取得し、大きさを設定する
-        const stageElement = document.getElementById("stage");
-        stageElement.style.width = this.puyoSize * this.stageSize.cols + 'px';
-        stageElement.style.height = this.puyoSize * this.stageSize.rows + 'px';
-        stageElement.style.backgroundColor = stageBackgroundColor;
+        this.stageElement.style.width = puyoSize * stageCols + 'px';
+        this.stageElement.style.height = puyoSize * stageRows + 'px';
+        this.stageElement.style.backgroundColor = stageBackgroundColor;
 
         const nextElement = document.getElementById("next");
-        nextElement.style.width = this.puyoSize + 'px';
-        nextElement.style.height = this.puyoSize * 2 + 'px';
+        nextElement.style.width = puyoSize + 'px';
+        nextElement.style.height = puyoSize * 2 + 'px';
 
         const nextnextElement = document.getElementById("next-next");
-        nextnextElement.style.width = this.puyoSize + 'px';
-        nextnextElement.style.height = this.puyoSize * 2 + 'px';
+        nextnextElement.style.width = puyoSize + 'px';
+        nextnextElement.style.height = puyoSize * 2 + 'px';
     }
+
+    /**
+     * 画面にぷよを追加する
+     * @param {StagePuyo} puyo
+     */
+    addNewPuyo(puyo) {
+        const element = document.createElement("img");
+        element.id = domId(puyo.id);
+        element.src = imageSorcePath(puyo.color);
+        element.style.width = puyoSize + "px";
+        element.style.height = puyoSize + "px";
+        element.style.position = "absolute";
+        element.style.left = puyo.positionX + "px";
+        element.style.top = puyo.positionY + "px";
+
+        this.stageElement.appendChild(element);
+    }
+
+    /**
+     * ぷよの位置変化を画面に反映させる 
+     * @param {StagePuyo} puyo
+     */
+    updatePuyoPosition(puyo) {
+        const element = document.getElementById(domId(puyo.id));
+        element.style.left = puyo.positionX + "px";
+        element.style.top = puyo.positionY + "px";
+    }
+
+}
+
+/**
+ * ぷよ消えエフェクトの描画
+ * @param {PoppingPuyos} poppingPuyos
+ * @param {number} currentFrame
+ */
+export function renderPoppingAnimation(poppingPuyos, currentFrame) {
+    const ratio = poppingPuyos.poppingProgressRate(currentFrame);
+    if (ratio >= 1) {
+        // アニメーションを終了する
+        const stageElement = document.getElementById("stage");
+        poppingPuyos.puyoIds.forEach(id => {
+            var element = document.getElementById(domId(id));
+            if (element) {
+                stageElement.removeChild(element);
+            }
+        });
+        return;
+    }
+
+    const display = ratio > 0.75 || (ratio < 0.50 && ratio > 0.25) ? "block" : "none";
+    poppingPuyos.puyoIds.forEach(id => {
+        var element = document.getElementById(domId(id));
+        element.style.display = display;
+    });
 }
 
 class TsumoRenderer {
@@ -101,6 +152,10 @@ class TsumoRenderer {
         document.getElementById("next-next-jiku-puyo").src = imageSorcePath(nextnext.jikuColor);
         document.getElementById("next-next-dependent-puyo").src = imageSorcePath(nextnext.dependentColor);
     }
+}
+
+function domId(puyoId) {
+    return `puyo-${puyoId}`;
 }
 
 function imageSorcePath(colorInt) {

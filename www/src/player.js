@@ -1,7 +1,8 @@
-import { Config } from  "./config.js";
+import { Config, puyoSize } from  "./config.js";
 import { StaticStage } from "./stage.js";
 import { PuyoImage } from "./puyoimage.js";
 import { SingletonContainer } from "./singleton.js";
+import { StagePuyo } from "./puyo.js";
 
 export class Player {
     // static centerPuyo;
@@ -140,7 +141,7 @@ export class Player {
     //ぷよ設置確認
     static createNewPuyo () {
         // ぷよぷよが置けるかどうか、1番上の段の左から3つ目を確認する
-        if(StaticStage.board[0][2]) {
+        if (SingletonContainer.stage.isGameOver()) {
             // 空白でない場合は新しいぷよを置けない
             return false;
         }
@@ -159,8 +160,8 @@ export class Player {
         this.puyoStatus = {
             x: 2, // 中心ぷよの位置: 左から2列目
             y: -1, // 画面上部ギリギリから出てくる
-            left: 2 * Config.puyoImgWidth,
-            top: -1 * Config.puyoImgHeight,
+            left: 2 * puyoSize,
+            top: -1 * puyoSize,
             dx: 0, // 動くぷよの相対位置: 動くぷよは上方向にある
             dy: -1, 
             rotation: 90 // 動くぷよの角度は90度（上向き）
@@ -175,8 +176,8 @@ export class Player {
     static setPuyoPosition () {
         this.centerPuyoElement.style.left = this.puyoStatus.left + 'px';
         this.centerPuyoElement.style.top = this.puyoStatus.top + 'px';
-        const x = this.puyoStatus.left + Math.cos(this.puyoStatus.rotation * Math.PI / 180) * Config.puyoImgWidth;
-        const y = this.puyoStatus.top - Math.sin(this.puyoStatus.rotation * Math.PI / 180) * Config.puyoImgHeight;
+        const x = this.puyoStatus.left + Math.cos(this.puyoStatus.rotation * Math.PI / 180) * puyoSize;
+        const y = this.puyoStatus.top - Math.sin(this.puyoStatus.rotation * Math.PI / 180) * puyoSize;
         this.movablePuyoElement.style.left = x + 'px';
         this.movablePuyoElement.style.top = y + 'px';
     }
@@ -188,7 +189,7 @@ export class Player {
         let y = this.puyoStatus.y;
         let dx = this.puyoStatus.dx;
         let dy = this.puyoStatus.dy;
-        if(y + 1 >= Config.stageRows || StaticStage.board[y + 1][x] || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || StaticStage.board[y + dy + 1][x + dx]))) {
+        if (y + 1 >= Config.stageRows || SingletonContainer.stage.puyoExistsFromTop(x, y + 1) || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || SingletonContainer.stage.puyoExistsFromTop(x + dx, y + dy + 1)))) {
             isBlocked = true;
         }
         if(!isBlocked) {
@@ -198,7 +199,7 @@ export class Player {
                 // 下キーが押されているならもっと加速する
                 this.puyoStatus.top += Config.playerDownSpeed;
             }
-            if(Math.floor(this.puyoStatus.top / Config.puyoImgHeight) != y) {
+            if (Math.floor(this.puyoStatus.top / puyoSize) != y) {
                 // ブロックの境を超えたので、再チェックする
                 // 下キーが押されていたら、得点を加算する
                 if(isDownPressed) {
@@ -206,7 +207,7 @@ export class Player {
                 }
                 y += 1;
                 this.puyoStatus.y = y;
-                if(y + 1 >= Config.stageRows || StaticStage.board[y + 1][x] || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || StaticStage.board[y + dy + 1][x + dx]))) {
+                if (y + 1 >= Config.stageRows || SingletonContainer.stage.puyoExistsFromTop(x, y + 1) || (y + dy + 1 >= 0 && (y + dy + 1 >= Config.stageRows || SingletonContainer.stage.puyoExistsFromTop(x + dx, y + dy + 1)))) {
                     isBlocked = true;
                 }
                 if(!isBlocked) {
@@ -215,7 +216,7 @@ export class Player {
                     return;
                 } else {
                     // 境を超えたらブロックにぶつかった。位置を調節して、接地を開始する
-                    this.puyoStatus.top = y * Config.puyoImgHeight;
+                    this.puyoStatus.top = y * puyoSize;
                     this.groundFrame = 1;
                     return;
                 }
@@ -256,24 +257,24 @@ export class Player {
             // その方向にブロックがないことを確認する
             // まずは自分の左右を確認
             let canMove = true;
-            if(y < 0 || x + cx < 0 || x + cx >= Config.stageCols || StaticStage.board[y][x + cx]) {
+            if (y < 0 || x + cx < 0 || x + cx >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(x + cx, y)) {
                 if(y >= 0) {
                     canMove = false;
                 }
             }
-            if(my < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || StaticStage.board[my][mx + cx]) {
+            if (my < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(mx + cx, my)) {
                 if(my >= 0) {
                     canMove = false;
                 }
             }
             // 接地していない場合は、さらに1個下のブロックの左右も確認する
-            if(this.groundFrame === 0) {
-                if(y + 1 < 0 || x + cx < 0 || x + cx >= Config.stageCols || StaticStage.board[y + 1][x + cx]) {
+            if (this.groundFrame === 0) {
+                if (y + 1 < 0 || x + cx < 0 || x + cx >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(x + cx, y + 1)) {
                     if(y + 1 >= 0) {
                         canMove = false;
                     }
                 }
-                if(my + 1 < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || StaticStage.board[my + 1][mx + cx]) {
+                if (my + 1 < 0 || mx + cx < 0 || mx + cx >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(mx + cx, my + 1)) {
                     if(my + 1 >= 0) {
                         canMove = false;
                     }
@@ -283,8 +284,8 @@ export class Player {
             if(canMove) {         
                 // 動かすことが出来るので、移動先情報をセットして移動状態にする       
                 this.actionStartFrame = frame;
-                this.moveSource = x * Config.puyoImgWidth;
-                this.moveDestination = (x + cx) * Config.puyoImgWidth;
+                this.moveSource = x * puyoSize;
+                this.moveDestination = (x + cx) * puyoSize;
                 this.puyoStatus.x += cx;
                 return 'moving';
             }
@@ -304,15 +305,15 @@ export class Player {
                 // 右から上には100% 確実に回せる。何もしない
             } else if(rotation === 90) {
                 // 上から左に回すときに、左にブロックがあれば右に移動する必要があるのでまず確認する
-                if(y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || StaticStage.board[y + 1][x - 1]) {
+                if (y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(x - 1, y + 1)) {
                     if(y + 1 >= 0) {
                         // ブロックがある。右に1個ずれる
                         cx = 1;
                     }
                 }
                 // 右にずれる必要がある時、右にもブロックがあれば回転出来ないので確認する
-                if(cx === 1) {
-                    if(y + 1 < 0 || x + 1 < 0 || y + 1 >= Config.stageRows || x + 1 >= Config.stageCols || StaticStage.board[y + 1][x + 1]) {
+                if (cx === 1) {
+                    if (y + 1 < 0 || x + 1 < 0 || y + 1 >= Config.stageRows || x + 1 >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(x + 1, y + 1)) {
                         if(y + 1 >= 0) {
                             // ブロックがある。回転出来なかった
                             canRotate = false;
@@ -321,14 +322,14 @@ export class Player {
                 }
             } else if(rotation === 180) {
                 // 左から下に回す時には、自分の下か左下にブロックがあれば1個上に引き上げる。まず下を確認する
-                if(y + 2 < 0 || y + 2 >= Config.stageRows || StaticStage.board[y + 2][x]) {
+                if (y + 2 < 0 || y + 2 >= Config.stageRows || SingletonContainer.stage.puyoExistsFromTop(x, y + 2)) {
                     if(y + 2 >= 0) {
                         // ブロックがある。上に引き上げる
                         cy = -1;
                     }
                 }
                 // 左下も確認する
-                if(y + 2 < 0 || y + 2 >= Config.stageRows || x - 1 < 0 || StaticStage.board[y + 2][x - 1]) {
+                if (y + 2 < 0 || y + 2 >= Config.stageRows || x - 1 < 0 || SingletonContainer.stage.puyoExistsFromTop(x - 1, y + 2)) {
                     if(y + 2 >= 0) {
                         // ブロックがある。上に引き上げる
                         cy = -1;
@@ -336,15 +337,15 @@ export class Player {
                 }
             } else if(rotation === 270) {
                 // 下から右に回すときは、右にブロックがあれば左に移動する必要があるのでまず確認する
-                if(y + 1 < 0 || x + 1 < 0 || x + 1 >= Config.stageCols || StaticStage.board[y + 1][x + 1]) {
+                if (y + 1 < 0 || x + 1 < 0 || x + 1 >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(x + 1, y + 1)) {
                     if(y + 1 >= 0) {
                         // ブロックがある。左に1個ずれる
                         cx = -1;
                     }
                 }
                 // 左にずれる必要がある時、左にもブロックがあれば回転出来ないので確認する
-                if(cx === -1) {
-                    if(y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || StaticStage.board[y + 1][x - 1]) {
+                if (cx === -1) {
+                    if (y + 1 < 0 || x - 1 < 0 || x - 1 >= Config.stageCols || SingletonContainer.stage.puyoExistsFromTop(x - 1, y + 1)) {
                         if(y + 1 >= 0) {
                             // ブロックがある。回転出来なかった
                             canRotate = false;
@@ -361,12 +362,12 @@ export class Player {
                         this.puyoStatus.y -= 1;
                         this.groundFrame = 0;
                     }
-                    this.puyoStatus.top = this.puyoStatus.y * Config.puyoImgHeight;
+                    this.puyoStatus.top = this.puyoStatus.y * puyoSize;
                 }
                 // 回すことが出来るので、回転後の情報をセットして回転状態にする
                 this.actionStartFrame = frame;
-                this.rotateBeforeLeft = x * Config.puyoImgHeight;
-                this.rotateAfterLeft = (x + cx) * Config.puyoImgHeight;
+                this.rotateBeforeLeft = x * puyoSize;
+                this.rotateAfterLeft = (x + cx) * puyoSize;
                 this.rotateFromRotation = this.puyoStatus.rotation;
                 // 次の状態を先に設定しておく
                 this.puyoStatus.x += cx;
@@ -411,14 +412,39 @@ export class Player {
         const y = this.puyoStatus.y;
         const dx = this.puyoStatus.dx;
         const dy = this.puyoStatus.dy;
-        if(y >= 0) {
+        // 軸ぷよが上側にある場合は、軸以外を先にステージにセットする
+        if(dy > 0 && y + dy >= 0) {
+            const puyo = new StagePuyo(
+                Math.random(),
+                this.movablePuyo,
+                (x + dx) * puyoSize,
+                (y + dy) * puyoSize
+            );
+            SingletonContainer.stage.addPuyo(x + dx, y + dy, puyo);
             // 画面外のぷよは消してしまう
-            StaticStage.setPuyo(x, y, this.centerPuyo);
             StaticStage.puyoCount++;
         }
-        if(y + dy >= 0) {
+        if (y >= 0) {
+            const puyo = new StagePuyo(
+                Math.random(),
+                this.centerPuyo,
+                x * puyoSize,
+                y * puyoSize
+            );
+            SingletonContainer.stage.addPuyo(x, y, puyo);
             // 画面外のぷよは消してしまう
-            StaticStage.setPuyo(x + dx, y + dy, this.movablePuyo);
+            StaticStage.puyoCount++;
+        }
+　　　　// 軸ぷよが下側にある場合は、軸を先に設置させる
+        if(dy <= 0 && y + dy >= 0) {
+            const puyo = new StagePuyo(
+                Math.random(),
+                this.movablePuyo,
+                (x + dx) * puyoSize,
+                (y + dy) * puyoSize
+            );
+            SingletonContainer.stage.addPuyo(x + dx, y + dy, puyo);
+            // 画面外のぷよは消してしまう
             StaticStage.puyoCount++;
         }
         // 操作用に作成したぷよ画像を消す

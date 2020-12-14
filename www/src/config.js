@@ -27,3 +27,11 @@ export class Config {
     static zenkeshiDuration = 150; // 全消し時のアニメーションミリセカンド
     static gameOverFrame = 3000; // ゲームオーバー演出のサイクルフレーム
 }
+
+export const puyoSize = 40;
+export const fontHeight = 33;
+
+export const stageCols = 6;
+export const stageRows = 12;
+
+export const requiredPuyoCountToPop = 4;

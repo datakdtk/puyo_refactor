@@ -1,5 +1,5 @@
-import { Config } from  "./config.js";
-import { PuyoImage } from "./puyoimage.js";
+import { Config, puyoSize, requiredPuyoCountToPop, stageCols, stageRows } from  "./config.js";
+import { StagePuyo } from "./puyo.js";
 
 export class StaticStage {
     // static stageElement;
@@ -18,7 +18,7 @@ export class StaticStage {
         this.stageElement = document.getElementById("stage");
         
         const zenkeshiImage = document.getElementById("zenkeshi");
-        zenkeshiImage.width = Config.puyoImgWidth * 6;
+        zenkeshiImage.width = puyoSize * 6;
         zenkeshiImage.style.position = 'absolute';
         zenkeshiImage.style.display = 'none';        
         this.zenkeshiImage = zenkeshiImage;
@@ -56,209 +56,13 @@ export class StaticStage {
         this.puyoCount = puyoCount;
     }
 
-    // 画面とメモリ両方に puyo をセットする
-    static setPuyo(x, y, puyo) {
-        // 画像を作成し配置する
-        const puyoImage = PuyoImage.getPuyo(puyo);
-        puyoImage.style.left = x * Config.puyoImgWidth + "px";
-        puyoImage.style.top = y * Config.puyoImgHeight + "px";
-        this.stageElement.appendChild(puyoImage);
-        // メモリにセットする
-        this.board[y][x] = {
-            puyo: puyo,
-            element: puyoImage
-        }
-    }
-
-    // 自由落下をチェックする
-    static checkFall() {
-        this.fallingPuyoList.length = 0;
-        let isFalling = false;
-        // 下の行から上の行を見ていく
-        for(let y = Config.stageRows - 2; y >= 0; y--) { 
-            const line = this.board[y];
-            for(let x = 0; x < line.length; x++) {
-                if(!this.board[y][x]) {
-                    // このマスにぷよがなければ次
-                    continue;
-                }
-                if(!this.board[y + 1][x]) {
-                    // このぷよは落ちるので、取り除く
-                    let cell = this.board[y][x];
-                    this.board[y][x] = null;
-                    let dst = y;
-                    while(dst + 1 < Config.stageRows && this.board[dst + 1][x] == null) {
-                        dst++;
-                    }
-                    // 最終目的地に置く
-                    this.board[dst][x] = cell;
-                    // 落ちるリストに入れる
-                    this.fallingPuyoList.push({
-                        element: cell.element,
-                        position: y * Config.puyoImgHeight,
-                        destination: dst * Config.puyoImgHeight,
-                        falling: true
-                    });
-                    // 落ちるものがあったことを記録しておく
-                    isFalling = true;
-                }
-            }
-        }
-        return isFalling;
-    }
-    // 自由落下させる
-    static fall() {
-        let isFalling = false;
-        for(const fallingPuyo of this.fallingPuyoList) {
-            if(!fallingPuyo.falling) {
-                // すでに自由落下が終わっている
-                continue;
-            }
-            let position = fallingPuyo.position;
-            position += Config.freeFallingSpeed;
-            if(position >= fallingPuyo.destination) {
-                // 自由落下終了
-                position = fallingPuyo.destination;
-                fallingPuyo.falling = false;
-            } else {
-                // まだ落下しているぷよがあることを記録する
-                isFalling = true;
-            }
-            // 新しい位置を保存する
-            fallingPuyo.position = position;
-            // ぷよを動かす
-            fallingPuyo.element.style.top = position + 'px';
-        }
-        return isFalling;
-    }
-
-    // 消せるかどうか判定する
-    static checkErase(startFrame) {
-        this.eraseStartFrame = startFrame;
-        this.erasingPuyoInfoList.length = 0;
-
-        // 何色のぷよを消したかを記録する
-        const erasedPuyoColor = {};
-
-        // 隣接ぷよを確認する関数内関数を作成
-        const sequencePuyoInfoList = [];
-        const existingPuyoInfoList = [];
-        const checkSequentialPuyo = (x, y) => {
-            // ぷよがあるか確認する
-            const orig = this.board[y][x];
-            if(!orig) {
-                // ないなら何もしない
-                return;
-            }
-            // あるなら一旦退避して、メモリ上から消す
-            const puyo = this.board[y][x].puyo;
-            sequencePuyoInfoList.push({
-                x: x,
-                y: y,
-                cell: this.board[y][x]
-            });
-            this.board[y][x] = null;
-
-            // 四方向の周囲ぷよを確認する
-            const direction = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-            for(let i = 0; i < direction.length; i++) {
-                const dx = x + direction[i][0];
-                const dy = y + direction[i][1];
-                if(dx < 0 || dy < 0 || dx >= Config.stageCols || dy >= Config.stageRows) {
-                    // ステージの外にはみ出た
-                    continue;
-                }
-                const cell = this.board[dy][dx];
-                if(!cell || cell.puyo !== puyo) {
-                    // ぷよの色が違う
-                    continue;
-                }
-                // そのぷよのまわりのぷよも消せるか確認する
-                checkSequentialPuyo(dx, dy);
-                
-            };
-        };
-        
-        // 実際に削除できるかの確認を行う
-        for(let y = 0; y < Config.stageRows; y++) {
-            for(let x = 0; x < Config.stageCols; x++) {
-                sequencePuyoInfoList.length = 0;
-                const puyoColor = this.board[y][x] && this.board[y][x].puyo;
-                checkSequentialPuyo(x, y);
-                if(sequencePuyoInfoList.length == 0 || sequencePuyoInfoList.length < Config.erasePuyoCount) {
-                    // 連続して並んでいる数が足りなかったので消さない
-                    if(sequencePuyoInfoList.length) {
-                        // 退避していたぷよを消さないリストに追加する
-                        existingPuyoInfoList.push(...sequencePuyoInfoList);
-                    }
-                } else {
-                    // これらは消して良いので消すリストに追加する
-                    this.erasingPuyoInfoList.push(...sequencePuyoInfoList);
-                    erasedPuyoColor[puyoColor] = true;
-                }
-            }
-        }
-        this.puyoCount -= this.erasingPuyoInfoList.length;
-
-        // 消さないリストに入っていたぷよをメモリに復帰させる
-        for(const info of existingPuyoInfoList) {
-            this.board[info.y][info.x] = info.cell;
-        }
-
-        if(this.erasingPuyoInfoList.length) {
-            // もし消せるならば、消えるぷよの個数と色の情報をまとめて返す
-            return {
-                piece: this.erasingPuyoInfoList.length,
-                color: Object.keys(erasedPuyoColor).length
-            };
-        }
-        return null;
-    }
-    // 消すアニメーションをする
-    static erasing(frame) {
-        const elapsedFrame = frame - this.eraseStartFrame;
-        const ratio = elapsedFrame / Config.eraseAnimationDuration;
-        if(ratio > 1) {
-            // アニメーションを終了する
-            for(const info of this.erasingPuyoInfoList) {
-                var element = info.cell.element;
-                this.stageElement.removeChild(element);
-            }
-            return false;
-        } else if(ratio > 0.75) {
-            for(const info of this.erasingPuyoInfoList) {
-                var element = info.cell.element;
-                element.style.display = 'block';
-            }
-            return true;
-        } else if(ratio > 0.50) {
-            for(const info of this.erasingPuyoInfoList) {
-                var element = info.cell.element;
-                element.style.display = 'none';
-            }
-            return true;
-        } else if(ratio > 0.25) {
-            for(const info of this.erasingPuyoInfoList) {
-                var element = info.cell.element;
-                element.style.display = 'block';
-            }
-            return true;
-        } else {
-            for(const info of this.erasingPuyoInfoList) {
-                var element = info.cell.element;
-                element.style.display = 'none';
-            }
-            return true;
-        }
-    }
-
     static showZenkeshi() {
         // 全消しを表示する
         this.zenkeshiImage.style.display = 'block';
         this.zenkeshiImage.style.opacity = '1';
         const startTime = Date.now();
-        const startTop = Config.puyoImgHeight * Config.stageRows;
-        const endTop = Config.puyoImgHeight * Config.stageRows / 3;
+        const startTop = puyoSize * stageRows;
+        const endTop = puyoSize * stageRows / 3;
         const animation = () => {
             const ratio = Math.min((Date.now() - startTime) / Config.zenkeshiDuration, 1);
             this.zenkeshiImage.style.top = (endTop - startTop) * ratio + startTop + 'px';
@@ -281,5 +85,237 @@ export class StaticStage {
             }
         };
         animation();
+    }
+}
+
+export class Stage {
+    constructor() {
+        this.columns = Array(stageCols).fill().map(x => []);
+        this.observers = [];
+    }
+
+    addObserver(obs) {
+        this.observers.push(obs);
+    }
+
+    /**
+     * 盤面にぷよを追加する
+     * @param {number} x ぷよを追加する列。通常0 - 5
+     * @param {number} y ぷよを置く高さ。通常0 - 12
+     * @param {StagePuyo} stagePuyo 置くぷよ
+     */
+    addPuyo(x, y, stagePuyo) {
+        const c = this.columns[x];
+        c.push(stagePuyo);
+        stagePuyo.setDestinationHeight(c.length);
+        if (c > stageRows + 1) {
+            c.pop();
+        }
+
+        this.observers.forEach(o => o.addNewPuyo(stagePuyo));
+    }
+
+    /**
+     * 盤上のぷよを自由落下させる
+     * @returns {boolean} いずれかのぷよの位置が変化した場合trueを返す
+     */
+    puyosFall() {
+        let anyFalls = false;
+        this.columns.forEach(col => {
+            col.forEach(puyo => {
+                const hasFallen = puyo.fall();
+                if (hasFallen) {
+                    anyFalls = true;
+                    this.observers.forEach(o => o.updatePuyoPosition(puyo));
+                };
+            })
+        })
+        return anyFalls;
+    }
+
+    /**
+     * 
+     * @param {number} currentFrame
+     * @returns {PoppingPuyos|null}
+     */
+    checkPoppingPuyos(currentFrame) {
+        /**
+         * 引数で与えられた連結情報につなげられるぷよ全部繋げる
+         * @param {SequentialPuyos} sequence
+         * @param {number} x 現在確認中の列を表すゼロ始まりのインデックス
+         * @param {number} y 現在確認中の行を表すゼロ始まりのインデックス
+         */
+        const completeSequence = (sequence, x, y) => {
+            const col = this.columns[x];
+            if (x < 0 || y < 0 || !col) {
+                return; // 画面外なので探索終了
+            }
+            const puyo = col[y];
+            if (!puyo) {
+                return; // ぷよの無いマスなので探索終了
+            }
+            const connected = sequence.tryToConnect(puyo, x, y);
+            if (!connected) {
+                return; // 繋がらなかったので探索終了
+            }
+
+            this.columns[x][y] = null; // 寿福チェック防止のため、一度つながったぷよは一旦消す
+
+            // 上下左右を再起的探索
+            completeSequence(sequence, x + 1, y);
+            completeSequence(sequence, x - 1, y);
+            completeSequence(sequence, x, y + 1);
+            completeSequence(sequence, x, y - 1);
+        }
+
+        const poppableSequences = [];
+        const unpoppableSequences = [];
+        // 配列の中身がループ中に変化するので、多分forEachじゃだめだと思う
+        for (let x = 0; x < stageCols; x++) {
+            const col = this.columns[x];
+            const colSize = col.length;
+            for (let y = 0; y < colSize; y++) {
+                const puyo = col[y];
+                if (!puyo) {
+                    continue;
+                }
+                const seq = new SequentialPuyos(puyo, x, y);
+                completeSequence(seq, x, y);
+                if (seq.canPop()) {
+                    poppableSequences.push(seq);
+                } else {
+                    unpoppableSequences.push(seq)
+                }
+            }
+        }
+
+        // 消えなかったぷよを盤面に復帰させる
+        unpoppableSequences.flatMap(s => s.puyos).forEach(p => {
+            this.columns[p.x][p.y] = p.puyo;
+        });
+        // 存在しないぷよの分だけ詰める
+        this.columns = this.columns.map(c => c.filter(x => x));
+        // 各ぷよの落下地点を更新
+        this.columns.forEach(col => {
+            const colSize = col.length;
+            for (let y = 0; y < colSize; y++) {
+                const puyo = col[y];
+                console.assert(puyo);
+                puyo.setDestinationHeight(y + 1);
+            }
+        });
+
+        return poppableSequences.length > 0 ? new PoppingPuyos(poppableSequences, currentFrame) : null;
+    }
+
+    /**
+     * ぷよが存在するかどうか
+     * @param {any} x 左端をゼロとする列番号
+     * @param {any} y 最下段をゼロとする行番号
+     */
+    puyoExists(x, y) {
+        const col = this.columns[x];
+        return col && col[y] != null;
+    }
+
+    /**
+     * ぷよが存在するかどうか。縦を上から数えるバージョン
+     * @param {any} x 左端をゼロとする列番号
+     * @param {any} y 最上段をゼロとする行番号
+     */
+    puyoExistsFromTop(x, y) {
+        const col = this.columns[x];
+        return col && col[stageRows - y - 1] != null;
+    }
+
+    /**
+     * @returns {boolean} ゲームオーバーならtrueを返す
+     */
+    isGameOver() {
+        return this.columns[2].length >= stageRows;
+    }
+}
+
+// 同じ色同士でつながっているぷよぷよたち
+class SequentialPuyos {
+    /**
+     * @param {StagePuyo} startPuyo 始点となるぷよ
+     * @param {number} x 始点となるぷよの横位置。ゼロ始まり
+     * @param {number} y 始点となるぷよの横位置。ゼロ始まり
+     */
+    constructor(startPuyo, x, y) {
+        this.startPuyo = startPuyo;
+        const p = {
+            puyo: startPuyo,
+            x: x,
+            y: y,
+        };
+        this.puyos = [p];
+    }
+
+    /**
+     * ぷよを繋げてみる
+     * @param {StagePuyo} newPuyo 新たに繋げてみるぷよ
+     * @param {number} x ぷよの横位置。ゼロ始まり
+     * @param {number} y ぷよの縦位置。ゼロ始まり
+     * @returns {boolean} 繋がったらtrueを返す
+     */
+    tryToConnect(newPuyo, x, y) {
+        if (newPuyo.color !== this.startPuyo.color) {
+            return false;
+        }
+        if (newPuyo.id === this.startPuyo.id) {
+            return true;
+        }
+        const p = {
+            puyo: newPuyo,
+            x: x,
+            y: y,
+        };
+        this.puyos.push(p);
+        return true;
+    } 
+
+    /**
+     * @returns {boolean} 消えるのに必要な個数以上つながっていたらtrue
+     */
+    canPop() {
+        return this.puyos.length >= requiredPuyoCountToPop;
+    }
+}
+
+// ぷよ消えエフェクトが終了するまでのフレーム数
+const poppintDuration = 30;
+
+// ぷよ消えエフェクト実行中のぷよぷよたち
+export class PoppingPuyos {
+    /**
+     * @param {Array.<SequentialPuyos>} sequences 連結ごとにまとめられた消されるぷよたち
+     * @param {number} startFrame 消えるアクションが開始されたフレーム
+     */
+    constructor(sequences, startFrame) {
+        const puyos = sequences.flatMap(s => s.puyos);
+        this.puyoCount = puyos.length;
+        this.colorCount = new Set(sequences.map(s => s.startPuyo.color)).size;
+        this.puyoIds = puyos.map(p => p.puyo.id);
+        this.startFrame = startFrame;
+    }
+
+    /**
+     * ぷよ消えエフェクトの終了フレームまで何割が経過したかを取得する
+     * @param {any} currentFrame
+     * @returns {number} 0から1の間の進行率
+     */
+    poppingProgressRate(currentFrame) {
+        return Math.min(1, (currentFrame - this.startFrame) / poppintDuration);
+    }
+
+    /**
+     * ぷよ消えエフェクトが終了したかどうか
+     * @param {Number} currentFrame
+     * @returns {boolean}
+     */
+    finishedPopping(currentFrame) {
+        return currentFrame > this.startFrame + poppintDuration;
     }
 }

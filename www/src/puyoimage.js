@@ -1,4 +1,4 @@
-import { Config } from  "./config.js";
+import { Config, puyoSize } from  "./config.js";
 import { StaticStage } from  "./stage.js";
 
 export class PuyoImage {
@@ -12,13 +12,13 @@ export class PuyoImage {
         for(let i = 0; i < 5; i++) {
             const image = document.getElementById(`puyo_${i + 1}`);
             image.removeAttribute('id');
-            image.width = Config.puyoImgWidth;
-            image.height = Config.puyoImgHeight;
+            image.width = puyoSize;
+            image.height = puyoSize;
             image.style.position = 'absolute';
             this.puyoImages[i] = image;
         }
         this.batankyuImage = document.getElementById('batankyu');
-        this.batankyuImage.width = Config.puyoImgWidth * 6;
+        this.batankyuImage.width = puyoSize * 6;
         this.batankyuImage.style.position = 'absolute';
     }
 
@@ -35,8 +35,8 @@ export class PuyoImage {
 
     static batankyu(frame) {
         const ratio = (frame - this.gameOverFrame) / Config.gameOverFrame;
-        const x = Math.cos(Math.PI / 2 + ratio * Math.PI * 2 * 10) * Config.puyoImgWidth;
-        const y = Math.cos(Math.PI + ratio * Math.PI * 2) * Config.puyoImgHeight * Config.stageRows / 4 + Config.puyoImgHeight * Config.stageRows / 2;
+        const x = Math.cos(Math.PI / 2 + ratio * Math.PI * 2 * 10) * puyoSize;
+        const y = Math.cos(Math.PI + ratio * Math.PI * 2) * puyoSize * Config.stageRows / 4 + puyoSize * Config.stageRows / 2;
         this.batankyuImage.style.left = x + 'px';
         this.batankyuImage.style.top = y + 'px';
     }

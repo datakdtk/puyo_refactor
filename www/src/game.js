@@ -14,13 +14,13 @@ window.addEventListener("load", () => {
     loop();
 });
 
-let state = new InitialState();
+let state = null;
 const stageSize = {
         cols: 6,
         rows: 12,
 }
 const fontHeight = 33;
-const renderer = new Renderer(stageSize, fontHeight);
+const renderer = new Renderer();
 
 function initialize() {
     // 画像を準備する
@@ -31,10 +31,12 @@ function initialize() {
     Player.initialize();
 
     SingletonContainer.initialize(renderer.puyoSize);
+    state = new InitialState(SingletonContainer.stage);
 
     renderer.firstRender();
     state.addScoreObserver(renderer.scoreRenderer);
     SingletonContainer.tsumoGenerator.addOvserver(renderer.tsumoRenderer);
+    SingletonContainer.stage.addObserver(renderer.stageRenderer);
 }
 
 function loop() {

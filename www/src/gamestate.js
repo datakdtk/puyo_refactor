@@ -1,12 +1,13 @@
 import { PuyoImage } from "./puyoimage.js";
-import { StaticStage } from "./stage.js";
 import { Player } from "./player.js";
 import { zenkeshiBonus, calculatePoppingScore } from "./score.js";
+import { renderPoppingAnimation } from "./renderer.js";
 
 class AbstractState {
     frame = 0;
     rensaCount = 0;
     score = 0;
+    poppingPuyos = null;
 
     scoreObservers = [];
 
@@ -15,6 +16,8 @@ class AbstractState {
         this.frame = previous.frame + 1;
         this.rensaCount = previous.rensaCount;
         this.score = previous.score;
+        this.stage = previous.stage;
+        this.poppingPuyos = previous.poppingPuyos;
 
         this.scoreObservers = previous.scoreObservers;
     }
@@ -33,28 +36,55 @@ export class InitialState {
     frame = 0;
     rensaCount = 0;
     score = 0;
+    poppingPuyos = null;
 
     scoreObservers = [];
+
+    constructor(stage) {
+        this.stage = stage;
+    }
 
     addScoreObserver(observer) {
         this.scoreObservers.push(observer);
     }
 
     nextState() {
-        return checkFall(this);
+        return new NotPlaying(this);
      }
 }
 
-class Falling extends AbstractState {
+class NotPlaying extends AbstractState {
     nextState() {
-        return StaticStage.fall() ? new Falling(this) : checkErase(this);
-    }
-}
+        if (this.poppingPuyos) {
+            renderPoppingAnimation(this.poppingPuyos, this.frame);
+            if (this.poppingPuyos.finishedPopping(this.frame)) {
+                this.poppingPuyos = null;
+            }
+            return new NotPlaying(this);
+        }
 
-class Erasing extends AbstractState {
-    nextState() {
-        return StaticStage.erasing(this.frame) ? new Erasing(this) : checkFall(this);
+        const hasFallen = this.stage.puyosFall();
+        if (hasFallen) {
+            return new NotPlaying(this);
+        }
+
+        const newPopping = this.stage.checkPoppingPuyos(this.frame);
+        if (newPopping) {
+            this.poppingPuyos = newPopping;
+            this.rensaCount++;
+            const additonalScore = calculatePoppingScore(
+                this.rensaCount,
+                this.poppingPuyos.puyoCount,
+                this.poppingPuyos.colorCount
+            );
+            this.addScore(additonalScore);
+            return new NotPlaying(this);
+        }
+
+        this.rensaCount = 0;
+        return createNewPuyo(this);
     }
+    
 }
 
 class Moving extends AbstractState {
@@ -101,35 +131,11 @@ class Batankyu extends AbstractState {
     }
 }
 
-function checkFall(state) {
-    return StaticStage.checkFall() ? new Falling(state) : checkErase(state);
-}
-
-function checkErase(state) {
-    const eraseInfo = StaticStage.checkErase(state.frame);
-    if (eraseInfo) {
-        state.rensaCount++;
-        // 得点を計算する
-        state.addScore(calculatePoppingScore(state.rensaCount, eraseInfo.piece, eraseInfo.color));
-        StaticStage.hideZenkeshi();
-        return new Erasing(state);
-    } else {
-        if (StaticStage.puyoCount === 0 && state.rensaCount > 0) {
-            // 全消しの処理をする
-            StaticStage.showZenkeshi();
-            state.addScore(zenkeshiBonus);
-        }
-        state.rensaCount = 0;
-        // 消せなかったら、新しいぷよを登場させる
-        return createNewPuyo(state);
-    }
-}
-
 function createNewPuyo(state) {
     return Player.createNewPuyo() ? new Playing(state) : new GameOver(state);
 }
 
 function fixPuyo(state) {
     Player.fix()
-    return checkFall(state);
+    return new NotPlaying(state);
 }
