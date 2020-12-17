@@ -93,7 +93,7 @@ class StageRenderer {
      */
     addNewPuyo(puyo) {
         const element = document.createElement("img");
-        element.id = domId(puyo.id);
+        element.id = puyo.id;
         element.src = imageSorcePath(puyo.color);
         element.style.width = puyoSize + "px";
         element.style.height = puyoSize + "px";
@@ -109,7 +109,7 @@ class StageRenderer {
      * @param {StagePuyo} puyo
      */
     updatePuyoPosition(puyo) {
-        const element = document.getElementById(domId(puyo.id));
+        const element = document.getElementById(puyo.id);
         element.style.left = puyo.positionX + "px";
         element.style.top = puyo.positionY + "px";
     }
@@ -127,7 +127,7 @@ export function renderPoppingAnimation(poppingPuyos, currentFrame) {
         // アニメーションを終了する
         const stageElement = document.getElementById("stage");
         poppingPuyos.puyoIds.forEach(id => {
-            var element = document.getElementById(domId(id));
+            var element = document.getElementById(id);
             if (element) {
                 stageElement.removeChild(element);
             }
@@ -137,7 +137,7 @@ export function renderPoppingAnimation(poppingPuyos, currentFrame) {
 
     const display = ratio > 0.75 || (ratio < 0.50 && ratio > 0.25) ? "block" : "none";
     poppingPuyos.puyoIds.forEach(id => {
-        var element = document.getElementById(domId(id));
+        var element = document.getElementById(id);
         element.style.display = display;
     });
 }
@@ -146,16 +146,12 @@ class TsumoRenderer {
     updateTsumo(tsumoGenerator) {
         const next = tsumoGenerator.getNextTsumo();
         document.getElementById("next-jiku-puyo").src = imageSorcePath(next.jikuColor);
-        document.getElementById("next-dependent-puyo").src = imageSorcePath(next.dependentColor);
+        document.getElementById("next-child-puyo").src = imageSorcePath(next.childColor);
   
         const nextnext = tsumoGenerator.getNextNextTsumo();
         document.getElementById("next-next-jiku-puyo").src = imageSorcePath(nextnext.jikuColor);
-        document.getElementById("next-next-dependent-puyo").src = imageSorcePath(nextnext.dependentColor);
+        document.getElementById("next-next-child-puyo").src = imageSorcePath(nextnext.childColor);
     }
-}
-
-function domId(puyoId) {
-    return `puyo-${puyoId}`;
 }
 
 function imageSorcePath(colorInt) {

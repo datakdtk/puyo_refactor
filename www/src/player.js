@@ -150,7 +150,7 @@ export class Player {
         SingletonContainer.tsumoGenerator.proceed();
         const tsumo = SingletonContainer.tsumoGenerator.getCurrentTsumo();
         this.centerPuyo = tsumo.jikuColor;
-        this.movablePuyo = tsumo.dependentColor;
+        this.movablePuyo = tsumo.childColor;
         // 新しいぷよ画像を作成する
         this.centerPuyoElement = PuyoImage.getPuyo(this.centerPuyo);
         this.movablePuyoElement = PuyoImage.getPuyo(this.movablePuyo);
