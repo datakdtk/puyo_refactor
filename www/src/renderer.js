@@ -1,9 +1,10 @@
 import { puyoSize, stageCols, stageRows, fontHeight } from "./config.js";
 import { StagePuyo } from "./puyo.js";
 
-const stageBackgroundColor = '#ffffff'; // ƒXƒe[ƒW‚Ì”wŒiF
-const scoreBackgroundColor = '#24c0bb'; // ƒXƒRƒA‚Ì”wŒiF
+const stageBackgroundColor = '#ffffff'; // ã‚¹ãƒ†ãƒ¼ã‚¸ã®èƒŒæ™¯è‰²
+const scoreBackgroundColor = '#24c0bb'; // ã‚¹ã‚³ã‚¢ã®èƒŒæ™¯è‰²
 
+const batankyuAnimationCycle = 3000; // ã‚²ãƒ¼ãƒ ã‚ªãƒ¼ãƒãƒ¼æ¼”å‡ºã®ã‚µã‚¤ã‚¯ãƒ«ãƒ•ãƒ¬ãƒ¼ãƒ 
 export class Renderer {
     constructor() {
         this.scoreRenderer = new ScoreRenderer();
@@ -17,9 +18,8 @@ export class Renderer {
     }
 }
 
-class ScoreRenderer {
+export class ScoreRenderer {
     fontTemplateList = []
-
 
     constructor() {
         this.scoreElement = document.getElementById("score");
@@ -47,33 +47,37 @@ class ScoreRenderer {
     }
 
     updateScore(score) {
+        const scoreElement = document.getElementById("score");
+
         let unprinted_numbers = score;
-        // ‚Ü‚¸Å‰‚ÉAscoreElement ‚Ì’†g‚ğ‹ó‚Á‚Û‚É‚·‚é
+        // ã¾ãšæœ€åˆã«ã€scoreElement ã®ä¸­èº«ã‚’ç©ºã£ã½ã«ã™ã‚‹
         while(this.scoreElement.firstChild) {
             this.scoreElement.removeChild(this.scoreElement.firstChild);
         }
-        // ƒXƒRƒA‚ğ‰º‚ÌŒ…‚©‚ç–„‚ß‚Ä‚¢‚­
+        // ã‚¹ã‚³ã‚¢ã‚’ä¸‹ã®æ¡ã‹ã‚‰åŸ‹ã‚ã¦ã„ã
         for(let i = 0; i < this.fontLength; i++) {
-            // 10‚ÅŠ„‚Á‚½‚ ‚Ü‚è‚ğ‹‚ß‚ÄAˆê”Ô‰º‚ÌŒ…‚ğæ‚èo‚·
+            // 10ã§å‰²ã£ãŸã‚ã¾ã‚Šã‚’æ±‚ã‚ã¦ã€ä¸€ç•ªä¸‹ã®æ¡ã‚’å–ã‚Šå‡ºã™
             const number = unprinted_numbers % 10;
-            // ˆê”Ô‚¤‚µ‚ë‚É’Ç‰Á‚·‚é‚Ì‚Å‚Í‚È‚­Aˆê”Ô‘O‚É’Ç‰Á‚·‚é‚±‚Æ‚ÅAƒXƒRƒA‚Ì•À‚Ñ‚ğ”š‚Æ“¯‚¶‚æ‚¤‚É‚·‚é
+            // ä¸€ç•ªã†ã—ã‚ã«è¿½åŠ ã™ã‚‹ã®ã§ã¯ãªãã€ä¸€ç•ªå‰ã«è¿½åŠ ã™ã‚‹ã“ã¨ã§ã€ã‚¹ã‚³ã‚¢ã®ä¸¦ã³ã‚’æ•°å­—ã¨åŒã˜ã‚ˆã†ã«ã™ã‚‹
             this.scoreElement.insertBefore(this.fontTemplateList[number].cloneNode(true), this.scoreElement.firstChild);
-            // 10 ‚ÅŠ„‚Á‚ÄŸ‚ÌŒ…‚Ì€”õ‚ğ‚µ‚Ä‚¨‚­
+            // 10 ã§å‰²ã£ã¦æ¬¡ã®æ¡ã®æº–å‚™ã‚’ã—ã¦ãŠã
             unprinted_numbers = Math.floor(unprinted_numbers / 10);
         }
     }
-
 }
 
 
-class StageRenderer {
+export class StageRenderer {
     constructor() {
         this.stageElement = document.getElementById("stage");
 
+        this.batankyuImage = document.getElementById('batankyu');
+        this.batankyuImage.width = puyoSize * 6;
+        this.batankyuImage.style.position = 'absolute';
     }
 
     firstRender() {
-        // HTML ‚©‚çƒXƒe[ƒW‚ÌŒ³‚Æ‚È‚é—v‘f‚ğæ“¾‚µA‘å‚«‚³‚ğİ’è‚·‚é
+        // HTML ã‹ã‚‰ã‚¹ãƒ†ãƒ¼ã‚¸ã®å…ƒã¨ãªã‚‹è¦ç´ ã‚’å–å¾—ã—ã€å¤§ãã•ã‚’è¨­å®šã™ã‚‹
         this.stageElement.style.width = puyoSize * stageCols + 'px';
         this.stageElement.style.height = puyoSize * stageRows + 'px';
         this.stageElement.style.backgroundColor = stageBackgroundColor;
@@ -88,7 +92,7 @@ class StageRenderer {
     }
 
     /**
-     * ‰æ–Ê‚É‚Õ‚æ‚ğ’Ç‰Á‚·‚é
+     * ç”»é¢ã«ã·ã‚ˆã‚’è¿½åŠ ã™ã‚‹
      * @param {StagePuyo} puyo
      */
     addNewPuyo(puyo) {
@@ -105,7 +109,7 @@ class StageRenderer {
     }
 
     /**
-     * ‚Õ‚æ‚ÌˆÊ’u•Ï‰»‚ğ‰æ–Ê‚É”½‰f‚³‚¹‚é 
+     * ã·ã‚ˆã®ä½ç½®å¤‰åŒ–ã‚’ç”»é¢ã«åæ˜ ã•ã›ã‚‹ 
      * @param {StagePuyo} puyo
      */
     updatePuyoPosition(puyo) {
@@ -114,33 +118,56 @@ class StageRenderer {
         element.style.top = puyo.positionY + "px";
     }
 
-}
-
-/**
- * ‚Õ‚æÁ‚¦ƒGƒtƒFƒNƒg‚Ì•`‰æ
- * @param {PoppingPuyos} poppingPuyos
- * @param {number} currentFrame
- */
-export function renderPoppingAnimation(poppingPuyos, currentFrame) {
-    const ratio = poppingPuyos.poppingProgressRate(currentFrame);
-    if (ratio >= 1) {
-        // ƒAƒjƒ[ƒVƒ‡ƒ“‚ğI—¹‚·‚é
-        const stageElement = document.getElementById("stage");
-        poppingPuyos.puyoIds.forEach(id => {
-            var element = document.getElementById(id);
-            if (element) {
-                stageElement.removeChild(element);
-            }
-        });
-        return;
+    updateNextTsumo(tsumoGenerator) {
+        const next = tsumoGenerator.getNextTsumo();
+        document.getElementById("next-jiku-puyo").src = imageSorcePath(next.jikuColor);
+        document.getElementById("next-child-puyo").src = imageSorcePath(next.childColor);
+  
+        const nextnext = tsumoGenerator.getNextNextTsumo();
+        document.getElementById("next-next-jiku-puyo").src = imageSorcePath(nextnext.jikuColor);
+        document.getElementById("next-next-child-puyo").src = imageSorcePath(nextnext.childColor);
     }
 
-    const display = ratio > 0.75 || (ratio < 0.50 && ratio > 0.25) ? "block" : "none";
-    poppingPuyos.puyoIds.forEach(id => {
-        var element = document.getElementById(id);
-        element.style.display = display;
-    });
+    /**
+     * ã·ã‚ˆæ¶ˆãˆã‚¨ãƒ•ã‚§ã‚¯ãƒˆã®æç”»
+     * @param {PoppingPuyos} poppingPuyos
+     * @param {number} currentFrame
+     */
+    renderPoppingAnimation(poppingPuyos, currentFrame) {
+        const ratio = poppingPuyos.poppingProgressRate(currentFrame);
+        if (ratio >= 1) {
+            // ã‚¢ãƒ‹ãƒ¡ãƒ¼ã‚·ãƒ§ãƒ³ã‚’çµ‚äº†ã™ã‚‹
+            const stageElement = document.getElementById("stage");
+            poppingPuyos.puyoIds.forEach(id => {
+                var element = document.getElementById(id);
+                if (element) {
+                    stageElement.removeChild(element);
+                }
+            });
+            return;
+        }
+
+        const display = ratio > 0.75 || (ratio < 0.50 && ratio > 0.25) ? "block" : "none";
+        poppingPuyos.puyoIds.forEach(id => {
+            var element = document.getElementById(id);
+            element.style.display = display;
+        });
+    }
+
+    showBatankyuImage() {
+        this.stageElement.appendChild(this.batankyuImage);
+        this.batankyuImage.style.top = -this.batankyuImage.height + 'px';
+    }
+
+    renderBatankyuAnimation(frame) {
+        const ratio = frame / batankyuAnimationCycle;
+        const x = Math.cos(Math.PI / 2 + ratio * Math.PI * 2 * 10) * puyoSize;
+        const y = Math.cos(Math.PI + ratio * Math.PI * 2) * puyoSize * stageRows / 4 + puyoSize * stageRows / 2;
+        this.batankyuImage.style.left = x + 'px';
+        this.batankyuImage.style.top = y + 'px';
+    }
 }
+
 
 class TsumoRenderer {
     updateTsumo(tsumoGenerator) {

@@ -1,5 +1,4 @@
-﻿import { puyoSize, stageCols, stageRows } from "./config.js";
-import { Stage } from "./stage.js";
+import { puyoSize, stageCols, stageRows } from "./config.js";
 
 // ぷよの色を表す数字。各色のぷよ画像のファイル名と合わせる
 const GREEN = 1;
@@ -22,7 +21,7 @@ const TURN_LEFT = 2;
 const QUICK_TURN = 3;
 
 // 諸々の設定値
-const tsumoDroppingSpeed = 0.1; // 1フレームでぷよ何個分落下するか
+const tsumoDroppingSpeed = 0.05; // 1フレームでぷよ何個分落下するか
 const fastDroppingRate = 4; // 下方向入力時に落下速度が何倍になるか
 const tsumoHorizontalMoveSpeed = 0.1; // 左右移動時に1フレームでぷよ何個分ずれるか
 const tsumoTurningFrame = 10; // ぷよが回転し始めてから終了までにかかるフレーム数
@@ -39,12 +38,12 @@ export class Tsumo {
         this.jikuPuyoId = `puyo-${moveCount}a`;
         this.childPuyoId = `puyo-${moveCount}b`;
 
-        // ツモが落ちてくる初期位置の設定。親要素内での相対位置
-        this.jikuPositionX = 3 * puyoSize;
-        this.jikuPositionY = -1 * puyoSize;
-
         // 軸ぷよの横方向の移動先の列番号。1始まり
         this.destinationJikuColumn = 3;
+
+        // ツモが落ちてくる初期位置の設定。親要素内での相対位置
+        this.jikuPositionX = (this.destinationJikuColumn - 1) * puyoSize;
+        this.jikuPositionY = -1 * puyoSize;
 
         // 高速落下中か否か
         this.nowFastDropping = false;
@@ -83,24 +82,29 @@ export class Tsumo {
         return this._moveVertically(stageColumns);
     }
 
-    jikuStagePuyo() {
-        return new StagePuyo(
+    /**
+     * ステージぷよオブジェクトの配列に変換する
+     * @returns {StagePuyo[]} 下側に位置するぷよが先になる 
+     */
+    toStagePuyos() {
+        const jiku = new StagePuyo(
             this.jikuPuyoId,
             this.jikuColor,
+            this.destinationJikuColumn,
             this.jikuPositionX,
             this.jikuPositionY,
         );
-    }
 
-    childStagePuyo() {
         const currentAngleRadian = Math.PI * this.childPuyoCurrentAngle / 180;
-
-        return new StagePuyo(
+        const child =  new StagePuyo(
             this.childPuyoId,
             this.childColor,
-            this.jikuPositionX + Math.sin(currentAngleRadian) * puyoSize,
-            this.jikuPositionY - Math.cos(currentAngleRadian) * puyoSize, // 座標が大きいほど下に来るので引き算にする
+            this._childPuyoDestinationColumn(),
+            this.jikuPositionX + Math.cos(currentAngleRadian) * puyoSize,
+            this.jikuPositionY - Math.sin(currentAngleRadian) * puyoSize, // 座標が大きいほど下に来るので引き算にする
         );
+
+        return this.childPuyoTargetAngle === 270 ? [child, jiku] : [jiku, child]; 
     }
 
     _processCommands(stageColumns) {
@@ -115,13 +119,13 @@ export class Tsumo {
 
             switch (command) {
                 case COMMAND_MOVE_LEFT:
-                    if (this._canMoveLeft()) {
-                        this.destinationJikuColumn -= 1
+                    if (this._canMoveLeft(stageColumns)) {
+                        this.destinationJikuColumn -= 1;
                     }
                     break;
                 case COMMAND_MOVE_RIGHT:
-                    if (this._canMoveRight()) {
-                        this.destinationJikuColumn += 1
+                    if (this._canMoveRight(stageColumns)) {
+                        this.destinationJikuColumn += 1;
                     }
                     break;
                 case COMMAND_TURN_LEFT:
@@ -144,7 +148,7 @@ export class Tsumo {
                     break;
                 case COMMAND_QUICK_TURN:
                     const verticalAligned = this.childPuyoTargetAngle === 90 || this.childPuyoTargetAngle === 270;
-                    if (verticalAligned && !this._canMoveLeft() && !this._canMoveRight()) {
+                    if (verticalAligned && !this._canMoveLeft(stageColumns) && !this._canMoveRight(stageColumns)) {
                         this.turnDirection = QUICK_TURN;
                         this.jikuPositionY = this.childPuyoTargetAngle === 90 ? this.jikuPositionY - puyoSize : this.jikuPositionY + puyoSize; // 軸ぷよと子ぷよの位置を入れ替える
                         this._addTargetAngle(180);
@@ -157,7 +161,7 @@ export class Tsumo {
     }
 
     _moveHorizontally() {
-        const destinationJikuPositionX = puyoSize * (colNumber - 1);
+        const destinationJikuPositionX = puyoSize * (this.destinationJikuColumn - 1);
         const moveUnit = puyoSize * tsumoHorizontalMoveSpeed;
         if (this.jikuPositionX < destinationJikuPositionX) {
             this.jikuPositionX = Math.min(destinationJikuPositionX, this.jikuPositionX + moveUnit);
@@ -176,9 +180,11 @@ export class Tsumo {
         const unitAngle = this.turnDirection === QUICK_TURN ? 180 / tsumoTurningFrame : 90 / tsumoTurningFrame;
 
         if (this.turnDirection === TURN_LEFT) {
-            this.childPuyoCurrentAngle = Math.min(this.childPuyoTargetAngle, this._addCurrentAngle(unitAngle));
+            this._addCurrentAngle(unitAngle);
+            this.childPuyoCurrentAngle = Math.min(this.childPuyoTargetAngle, this.childPuyoCurrentAngle);
         } else {
-            this.childPuyoCurrentAngle = Math.max(this.childPuyoTargetAngle, this._addCurrentAngle(-1 * unitAngle));
+            this._addCurrentAngle(-1 * unitAngle);
+            this.childPuyoCurrentAngle = Math.max(this.childPuyoTargetAngle, this.childPuyoCurrentAngle);
             // 永遠に回り続けてしまうのを防ぐため、目標角度が0°の場合は第4象限にはみ出したら手動で誤差修正。
             if (this.childPuyoTargetAngle === 0 && this.childPuyoCurrentAngle > 270) {
                 this.childPuyoCurrentAngle = 0;
@@ -195,7 +201,7 @@ export class Tsumo {
             calculateColumnHeight(stageColumns, this.destinationJikuColumn),
             calculateColumnHeight(stageColumns, this._childPuyoDestinationColumn()),
         );
-        const destinationJikuPositionY = this.childPuyoTargetAngle === 270 ? groundHeight + 2 * puyoSize : groundHeight + puyoSize;
+        const destinationJikuPositionY = this.childPuyoTargetAngle === 270 ? groundHeight - 2 * puyoSize : groundHeight - puyoSize;
         const moveUnit = this.nowFastDropping ? puyoSize * tsumoDroppingSpeed * fastDroppingRate : puyoSize * tsumoDroppingSpeed;
         this.jikuPositionY = Math.min(destinationJikuPositionY, this.jikuPositionY + moveUnit);
 
@@ -230,27 +236,31 @@ export class Tsumo {
         return this.destinationJikuColumn;
     }
 
-    _canMoveLeft() {
-        const leftmostCol = Math.min(this.destinationJikuColumn, this._childPuyoDestinationColumn());
-        return this._lowerPuyoPositionY <= calculateColumnHeight(stageColumns, leftmostCol- 1);
+    _lowerPuyoPositionY() {
+        return this.childPuyoTargetAngle === 270 ? this.jikuPositionY + puyoSize : this.jikuPositionY;
     }
 
-    _canMoveRight() {
+    _canMoveLeft(stageColumns) {
+        const leftmostCol = Math.min(this.destinationJikuColumn, this._childPuyoDestinationColumn());
+        return this._lowerPuyoPositionY() <= calculateColumnHeight(stageColumns, leftmostCol- 1);
+    }
+
+    _canMoveRight(stageColumns) {
         const rightmostCol = Math.max(this.destinationJikuColumn, this._childPuyoDestinationColumn());
-        return this._lowerPuyoPositionY <= calculateColumnHeight(stageColumns, rightmostCol + 1);
+        return this._lowerPuyoPositionY() <= calculateColumnHeight(stageColumns, rightmostCol + 1);
     }
 
     /**
      * 回転による軸ぷよの押し出し処理を行う
      * @returns {boolean} 軸ぷよを押し出し先に移動させることができず、回転不可能な場合はfalseを返す
      */
-    _adjustJikuPositionByTurning() {
+    _adjustJikuPositionByTurning(stageColumns) {
         if (this.childPuyoTargetAngle === 0) {
             // 子ぷよが右側にある場合
             if (this.jikuPositionY <= calculateColumnHeight(stageColumns, this.destinationJikuColumn + 1)) {
                 return true; // 回転先が空いているため横位置調整の必要なし
             }
-            if (this._canMoveLeft()) {
+            if (this._canMoveLeft(stageColumns)) {
                 this.destinationJikuColumn -= 1; // 回転の結果左に1こずれる
                 return true;
             }
@@ -258,10 +268,10 @@ export class Tsumo {
 
         } else if (this.childPuyoTargetAngle === 180) {
             // 子ぷよが左側にある場合
-            if (this.jikuPositionY <= calculateColumnHeight(stageColumns, this.jikuPositionX - 1)) {
+            if (this.jikuPositionY <= calculateColumnHeight(stageColumns, this.destinationJikuColumn - 1)) {
                 return true; // 回転先が空いているため横位置調整の必要なし
             }
-            if (this._canMoveRight()) {
+            if (this._canMoveRight(stageColumns)) {
                 this.destinationJikuColumn += 1; // 回転の結果右に1こずれる
                 return true;
             }
@@ -275,7 +285,7 @@ export class Tsumo {
 
     _addTargetAngle(angleDiff) {
         this.childPuyoTargetAngle += angleDiff;
-        console.assert(this.childPuyoCurrentAngle % 90 === 0);
+        console.assert(this.childPuyoTargetAngle % 90 === 0);
         while (this.childPuyoTargetAngle < 0) {
             this.childPuyoTargetAngle += 360;
         }
@@ -299,7 +309,7 @@ function calculateColumnHeight(columns, colNumber) {
     if (colNumber <= 0 || colNumber > stageCols) {
         return -3 * puyoSize; // ステージ外。初期位置よりも高くする
     }
-    const col = columns[colNumber];
+    const col = columns[colNumber - 1];
     console.assert(col);
     return puyoSize * (stageRows - col.length);
 }
@@ -311,12 +321,14 @@ export class StagePuyo {
     /**
      * @param {string} id dom要素の識別などに利用する識別子
      * @param {number} color 色を表す整数
-     * @param {number} positionX ステージ左端を基準とする左右の表示位置
+     * @param {number} column ぷよが何列目に存在するか
+     * @param {number} positionY ステージ左端を基準とする左右の表示位置
      * @param {number} positionY ステージ上端を基準とする上下の表示位置
      */
-    constructor(id, color, positionX, positionY) {
+    constructor(id, color, column, positionX, positionY) {
         this.id = id;
         this.color = color;
+        this.column = column;
         this.positionX = positionX;
         this.positionY = positionY;
 
@@ -385,6 +397,9 @@ export class TsumoGenerator {
         this.observers.forEach(o => o.updateTsumo(this))
     }
 
+    /**
+     * @returns {Tsumo}
+     */
     getCurrentTsumo() {
         if (this.moveCount === 0) {
             return new Tsumo(0, GREEN, GREEN); // 開始前の仮の値
@@ -396,6 +411,9 @@ export class TsumoGenerator {
         );
     }
 
+    /**
+     * @returns {Tsumo}
+     */
     getNextTsumo() {
         return new Tsumo(
             this.moveCount + 1,
@@ -404,6 +422,9 @@ export class TsumoGenerator {
         );
     }
 
+    /**
+     * @returns {Tsumo}
+     */
     getNextNextTsumo() {
         return new Tsumo(
             this.moveCount + 2,

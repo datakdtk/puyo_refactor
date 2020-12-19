@@ -104,15 +104,13 @@ export class Stage {
      * @param {number} y ぷよを置く高さ。通常0 - 12
      * @param {StagePuyo} stagePuyo 置くぷよ
      */
-    addPuyo(x, y, stagePuyo) {
-        const c = this.columns[x];
+    addPuyo(stagePuyo) {
+        const c = this.columns[stagePuyo.column - 1];
         c.push(stagePuyo);
         stagePuyo.setDestinationHeight(c.length);
         if (c > stageRows + 1) {
             c.pop();
         }
-
-        this.observers.forEach(o => o.addNewPuyo(stagePuyo));
     }
 
     /**
