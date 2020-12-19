@@ -5,25 +5,17 @@ const stageBackgroundColor = '#ffffff'; // ステージの背景色
 const scoreBackgroundColor = '#24c0bb'; // スコアの背景色
 
 const batankyuAnimationCycle = 3000; // ゲームオーバー演出のサイクルフレーム
+
 export class Renderer {
     constructor() {
-        this.scoreRenderer = new ScoreRenderer();
-        this.stageRenderer = new StageRenderer();
-        this.tsumoRenderer = new TsumoRenderer();
-    }
-
-    firstRender() {
-        this.scoreRenderer.firstRender();
-        this.stageRenderer.firstRender();
-    }
-}
-
-export class ScoreRenderer {
-    fontTemplateList = []
-
-    constructor() {
+        this.stageElement = document.getElementById("stage");
+        this.batankyuImage = document.getElementById('batankyu');
         this.scoreElement = document.getElementById("score");
+        this.zenkeshiImage = document.getElementById("zenkeshi");
+        this.fontTemplateList = [];
 
+        
+        // フォント回りの大きさ決定
         let fontWidth = 0;
         for (let i = 0; i < 10; i++) {
             const fontImage = document.getElementById(`font${i}`);
@@ -39,44 +31,6 @@ export class ScoreRenderer {
     }
 
     firstRender() {
-        this.scoreElement.style.backgroundColor = scoreBackgroundColor;
-        this.scoreElement.style.top = puyoSize * stageRows + 'px';
-        this.scoreElement.style.width = puyoSize * stageCols + 'px';
-        this.scoreElement.style.height = fontHeight + "px";
-        this.updateScore(0);
-    }
-
-    updateScore(score) {
-        const scoreElement = document.getElementById("score");
-
-        let unprinted_numbers = score;
-        // まず最初に、scoreElement の中身を空っぽにする
-        while(this.scoreElement.firstChild) {
-            this.scoreElement.removeChild(this.scoreElement.firstChild);
-        }
-        // スコアを下の桁から埋めていく
-        for(let i = 0; i < this.fontLength; i++) {
-            // 10で割ったあまりを求めて、一番下の桁を取り出す
-            const number = unprinted_numbers % 10;
-            // 一番うしろに追加するのではなく、一番前に追加することで、スコアの並びを数字と同じようにする
-            this.scoreElement.insertBefore(this.fontTemplateList[number].cloneNode(true), this.scoreElement.firstChild);
-            // 10 で割って次の桁の準備をしておく
-            unprinted_numbers = Math.floor(unprinted_numbers / 10);
-        }
-    }
-}
-
-
-export class StageRenderer {
-    constructor() {
-        this.stageElement = document.getElementById("stage");
-
-        this.batankyuImage = document.getElementById('batankyu');
-        this.batankyuImage.width = puyoSize * 6;
-        this.batankyuImage.style.position = 'absolute';
-    }
-
-    firstRender() {
         // HTML からステージの元となる要素を取得し、大きさを設定する
         this.stageElement.style.width = puyoSize * stageCols + 'px';
         this.stageElement.style.height = puyoSize * stageRows + 'px';
@@ -89,6 +43,23 @@ export class StageRenderer {
         const nextnextElement = document.getElementById("next-next");
         nextnextElement.style.width = puyoSize + 'px';
         nextnextElement.style.height = puyoSize * 2 + 'px';
+
+        // ばたんきゅ～画像の大きさ設定
+        this.batankyuImage.width = puyoSize * 6;
+        this.batankyuImage.style.position = 'absolute';
+
+        // スコア表示の初期化
+        this.scoreElement.style.backgroundColor = scoreBackgroundColor;
+        this.scoreElement.style.top = puyoSize * stageRows + 'px';
+        this.scoreElement.style.width = puyoSize * stageCols + 'px';
+        this.scoreElement.style.height = fontHeight + "px";
+        this.updateScore(0);
+
+        // 全消し画像の初期化
+        this.zenkeshiImage.width = puyoSize * 6;
+        this.zenkeshiImage.style.position = 'absolute';
+        this.zenkeshiImage.style.display = 'none';        
+        this.stageElement.appendChild(this.zenkeshiImage);
     }
 
     /**
@@ -154,6 +125,55 @@ export class StageRenderer {
         });
     }
 
+    updateScore(score) {
+        let unprinted_numbers = score;
+        // まず最初に、scoreElement の中身を空っぽにする
+        while(this.scoreElement.firstChild) {
+            this.scoreElement.removeChild(this.scoreElement.firstChild);
+        }
+        // スコアを下の桁から埋めていく
+        for(let i = 0; i < this.fontLength; i++) {
+            // 10で割ったあまりを求めて、一番下の桁を取り出す
+            const number = unprinted_numbers % 10;
+            // 一番うしろに追加するのではなく、一番前に追加することで、スコアの並びを数字と同じようにする
+            this.scoreElement.insertBefore(this.fontTemplateList[number].cloneNode(true), this.scoreElement.firstChild);
+            // 10 で割って次の桁の準備をしておく
+            unprinted_numbers = Math.floor(unprinted_numbers / 10);
+        }
+    }
+
+    showZenkeshi() {
+        // 全消しを表示する
+        this.zenkeshiImage.style.display = 'block';
+        this.zenkeshiImage.style.opacity = '1';
+        const startTime = Date.now();
+        const startTop = puyoSize * stageRows;
+        const endTop = puyoSize * stageRows / 3;
+        const animation = () => {
+            const ratio = Math.min((Date.now() - startTime) / Config.zenkeshiDuration, 1);
+            this.zenkeshiImage.style.top = (endTop - startTop) * ratio + startTop + 'px';
+            if(ratio !== 1) {
+                requestAnimationFrame(animation);
+            }
+        };
+        animation();
+    }
+
+    hideZenkeshi() {
+        // 全消しを消去する
+        const startTime = Date.now();
+        const animation = () => {
+            const ratio = Math.min((Date.now() - startTime) / Config.zenkeshiDuration, 1);
+            this.zenkeshiImage.style.opacity = String(1 - ratio);
+            if(ratio !== 1) {
+                requestAnimationFrame(animation);
+            } else {
+                this.zenkeshiImage.style.display = 'none';
+            }
+        };
+        animation();
+    }
+
     showBatankyuImage() {
         this.stageElement.appendChild(this.batankyuImage);
         this.batankyuImage.style.top = -this.batankyuImage.height + 'px';
@@ -165,19 +185,6 @@ export class StageRenderer {
         const y = Math.cos(Math.PI + ratio * Math.PI * 2) * puyoSize * stageRows / 4 + puyoSize * stageRows / 2;
         this.batankyuImage.style.left = x + 'px';
         this.batankyuImage.style.top = y + 'px';
-    }
-}
-
-
-class TsumoRenderer {
-    updateTsumo(tsumoGenerator) {
-        const next = tsumoGenerator.getNextTsumo();
-        document.getElementById("next-jiku-puyo").src = imageSorcePath(next.jikuColor);
-        document.getElementById("next-child-puyo").src = imageSorcePath(next.childColor);
-  
-        const nextnext = tsumoGenerator.getNextNextTsumo();
-        document.getElementById("next-next-jiku-puyo").src = imageSorcePath(nextnext.jikuColor);
-        document.getElementById("next-next-child-puyo").src = imageSorcePath(nextnext.childColor);
     }
 }
 

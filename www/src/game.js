@@ -1,8 +1,8 @@
-import { PoppingPuyos, Stage, StaticStage } from "./stage.js";
-import { ScoreRenderer, StageRenderer } from "./renderer.js";
+import { PoppingPuyos, Stage } from "./stage.js";
 import { KeyboardController } from "./controller.js";
 import { Tsumo, TsumoGenerator } from "./puyo.js";
 import { calculatePoppingScore } from "./score.js";
+import { Renderer } from "./renderer.js";
 
 class Game {
     constructor() {
@@ -26,30 +26,27 @@ class Game {
         this.frame = 0;
         this.isGameOver = false;
 
-        /** @type {ScoreRenderer} */
-        this.scoreRenderer = new ScoreRenderer();
-        /** @type {StageRenderer} */
-        this.stageRenderer = new StageRenderer();
+        /** @type {Renderer} */
+        this.renderer = new Renderer();
 
-        this.stage.addObserver(this.stageRenderer);
+        this.stage.addObserver(this.renderer);
     }
 
     firstRender() {
-        this.scoreRenderer.firstRender();
-        this.stageRenderer.firstRender();
+        this.renderer.firstRender();
     }
 
     loop() {
         ++this.frame;
 
         if (this.isGameOver) {
-            this.stageRenderer.renderBatankyuAnimation(this.frame);
+            this.renderer.renderBatankyuAnimation(this.frame);
             return;
         }
 
         if (this.currentTsumo) {
             const continueMoving = this.currentTsumo.move(this.stage.columns);
-            this.currentTsumo.toStagePuyos().forEach(p => this.stageRenderer.updatePuyoPosition(p))
+            this.currentTsumo.toStagePuyos().forEach(p => this.renderer.updatePuyoPosition(p))
             if (!continueMoving) {
                 this.currentTsumo.toStagePuyos().forEach(p => this.stage.addPuyo(p))
                 this.currentTsumo = null;
@@ -58,7 +55,7 @@ class Game {
         }
 
         if (this.poppingPuyos) {
-            this.stageRenderer.renderPoppingAnimation(this.poppingPuyos, this.frame);
+            this.renderer.renderPoppingAnimation(this.poppingPuyos, this.frame);
             if (this.poppingPuyos.finishedPopping(this.frame)) {
                 this.poppingPuyos = null;
             }
@@ -87,20 +84,20 @@ class Game {
 
         if (this.stage.isGameOver()) {
             this.isGameOver = true;
-            this.stageRenderer.showBatankyuImage();
+            this.renderer.showBatankyuImage();
             return;
         }
 
         this.tsumoGenerator.proceed();
         this.currentTsumo = this.tsumoGenerator.getCurrentTsumo();
         this.controller.setCurrentTsumo(this.currentTsumo);
-        this.stageRenderer.updateNextTsumo(this.tsumoGenerator);
-        this.currentTsumo.toStagePuyos().forEach(p => this.stageRenderer.addNewPuyo(p))
+        this.renderer.updateNextTsumo(this.tsumoGenerator);
+        this.currentTsumo.toStagePuyos().forEach(p => this.renderer.addNewPuyo(p))
     }
 
     _addScore(additionalAmount) {
         this.score += additionalAmount;
-        this.scoreRenderer.updateScore(this.score);
+        this.renderer.updateScore(this.score);
     }
 }
 
