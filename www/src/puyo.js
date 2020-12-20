@@ -203,11 +203,20 @@ export class Tsumo {
         );
         const destinationJikuPositionY = this.childPuyoTargetAngle === 270 ? groundHeight - 2 * puyoSize : groundHeight - puyoSize;
         const moveUnit = this.nowFastDropping ? puyoSize * tsumoDroppingSpeed * fastDroppingRate : puyoSize * tsumoDroppingSpeed;
-        this.jikuPositionY = Math.min(destinationJikuPositionY, this.jikuPositionY + moveUnit);
+        this.jikuPositionY += moveUnit;
 
         // 以下接地判定
         const groundedBefore = this.nowGrounding;
-        this.nowGrounding = this.jikuPositionY >= destinationJikuPositionY;
+        const movingHorizontally = this.jikuPositionX !== (this.destinationJikuColumn - 1) * puyoSize;
+        const turning = this.childPuyoCurrentAngle !== this.childPuyoTargetAngle;
+
+        const requiredToRaisePuyo = this.jikuPositionY > destinationJikuPositionY;
+        if (requiredToRaisePuyo) {
+            this.jikuPositionY = destinationJikuPositionY;
+            this.nowGrounding = true;
+        } else {
+            this.nowGrounding = !movingHorizontally && !turning && this.jikuPositionY >= destinationJikuPositionY;
+        }
 
         if (!this.nowGrounding) {
             return true;
@@ -223,7 +232,11 @@ export class Tsumo {
             this.groundingFrame = Math.max(this.groundingFrame, tsumoGroundingFrameLimit)
         }
 
-        return this.groundingFrame >= tsumoGroundingFrameLimit + tsumoGroundingAnimationFrame;
+        if (movingHorizontally || turning) {
+            return true;
+        }
+
+        return this.groundingFrame < tsumoGroundingFrameLimit + tsumoGroundingAnimationFrame;
     }
 
     _childPuyoDestinationColumn() {
