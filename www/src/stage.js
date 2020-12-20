@@ -145,6 +145,10 @@ export class Stage {
     isGameOver() {
         return this.columns[2].length >= stageRows;
     }
+
+    isZenkeshi() {
+        return this.columns.every(c => c.length === 0);
+    }
 }
 
 // 同じ色同士でつながっているぷよぷよたち

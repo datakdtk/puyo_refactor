@@ -1,7 +1,7 @@
 import { PoppingPuyos, Stage } from "./stage.js";
 import { KeyboardController } from "./controller.js";
 import { Tsumo, TsumoGenerator } from "./puyo.js";
-import { calculatePoppingScore } from "./score.js";
+import { calculatePoppingScore, zenkeshiBonus } from "./score.js";
 import { Renderer } from "./renderer.js";
 
 class Game {
@@ -56,10 +56,15 @@ class Game {
 
         if (this.poppingPuyos) {
             this.renderer.renderPoppingAnimation(this.poppingPuyos, this.frame);
-            if (this.poppingPuyos.finishedPopping(this.frame)) {
-                this.poppingPuyos = null;
+            if (!this.poppingPuyos.finishedPopping(this.frame)) {
+                return;
             }
-            return;
+            this.poppingPuyos = null;
+            console.log(this.stage.isZenkeshi());
+            if (this.stage.isZenkeshi()) {
+                this._addScore(zenkeshiBonus);
+                this.renderer.showZenkeshi();
+            }
         }
 
         const hasFallen = this.stage.puyosFall();
@@ -77,6 +82,7 @@ class Game {
                 this.poppingPuyos.colorCount
             );
             this._addScore(additonalScore);
+            this.renderer.hideZenkeshi();
             return;
         } else {
             this.rensaCount = 0;

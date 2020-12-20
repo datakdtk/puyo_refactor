@@ -5,6 +5,7 @@ const stageBackgroundColor = '#ffffff'; // ステージの背景色
 const scoreBackgroundColor = '#24c0bb'; // スコアの背景色
 
 const batankyuAnimationCycle = 3000; // ゲームオーバー演出のサイクルフレーム
+const zenkeshiAnimationDuration = 150; // 全消し演出のサイクルフレーム
 
 export class Renderer {
     constructor() {
@@ -150,7 +151,7 @@ export class Renderer {
         const startTop = puyoSize * stageRows;
         const endTop = puyoSize * stageRows / 3;
         const animation = () => {
-            const ratio = Math.min((Date.now() - startTime) / Config.zenkeshiDuration, 1);
+            const ratio = Math.min((Date.now() - startTime) / zenkeshiAnimationDuration, 1);
             this.zenkeshiImage.style.top = (endTop - startTop) * ratio + startTop + 'px';
             if(ratio !== 1) {
                 requestAnimationFrame(animation);
@@ -163,7 +164,7 @@ export class Renderer {
         // 全消しを消去する
         const startTime = Date.now();
         const animation = () => {
-            const ratio = Math.min((Date.now() - startTime) / Config.zenkeshiDuration, 1);
+            const ratio = Math.min((Date.now() - startTime) / zenkeshiAnimationDuration, 1);
             this.zenkeshiImage.style.opacity = String(1 - ratio);
             if(ratio !== 1) {
                 requestAnimationFrame(animation);
