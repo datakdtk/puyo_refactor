@@ -116,6 +116,12 @@ export class Tsumo {
 
         while (this.commandQueue.length > 0) {
             const command = this.commandQueue.shift();
+            
+            const turning = this.childPuyoTargetAngle !== this.childPuyoCurrentAngle;
+            const isTurningCommand = command === COMMAND_TURN_LEFT || command === COMMAND_TURN_RIGHT || command === COMMAND_QUICK_TURN;
+            if (turning && isTurningCommand) {
+                return; 
+            }
 
             switch (command) {
                 case COMMAND_MOVE_LEFT:
@@ -181,7 +187,11 @@ export class Tsumo {
 
         if (this.turnDirection === TURN_LEFT) {
             this._addCurrentAngle(unitAngle);
-            this.childPuyoCurrentAngle = Math.min(this.childPuyoTargetAngle, this.childPuyoCurrentAngle);
+            if (this.childPuyoTargetAngle === 0) {
+                this.childPuyoCurrentAngle = this.childPuyoCurrentAngle < 90 ? 0 : this.childPuyoCurrentAngle;
+            } else {
+                this.childPuyoCurrentAngle = Math.min(this.childPuyoTargetAngle, this.childPuyoCurrentAngle);
+            }
         } else {
             this._addCurrentAngle(-1 * unitAngle);
             this.childPuyoCurrentAngle = Math.max(this.childPuyoTargetAngle, this.childPuyoCurrentAngle);
