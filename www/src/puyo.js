@@ -27,7 +27,7 @@ const tsumoHorizontalMoveSpeed = 0.1; // 左右移動時に1フレームでぷ�
 const tsumoTurningFrame = 10; // ぷよが回転し始めてから終了までにかかるフレーム数
 const tsumoGroundingFrameLimit = 32; // ぷよの累計接地時間がこのフレーム数に達すると設置状態になる
 const tsumoGroundingCountLimit = 8; // ぷよの接地回数がこの数に達すると設置状態になる
-const tsumoGroundingAnimationFrame = 10; // ぷよの設置エフェクトの再生時間(エフェクトは未実装)
+const tsumoGroundingAnimationFrame = 6; // ぷよの設置エフェクトの再生時間(エフェクトは未実装)
 
 export class Tsumo {
     constructor(moveCount, jikuColor, childColor) {
@@ -225,7 +225,7 @@ export class Tsumo {
             this.jikuPositionY = destinationJikuPositionY;
             this.nowGrounding = true;
         } else {
-            this.nowGrounding = !movingHorizontally && !turning && this.jikuPositionY >= destinationJikuPositionY;
+            this.nowGrounding = !turning && this.jikuPositionY >= destinationJikuPositionY;
         }
 
         if (!this.nowGrounding) {
