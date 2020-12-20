@@ -1,4 +1,4 @@
-import { puyoSize, stageCols, stageRows } from "./config.js";
+import { puyoColorCount, puyoSize, stageCols, stageRows } from "./config.js";
 
 // ぷよの色を表す数字。各色のぷよ画像のファイル名と合わせる
 const GREEN = 1;
@@ -394,21 +394,14 @@ function calculateVerticalPuyoPosition(rowHeight) {
 
 
 export class TsumoGenerator {
-    colorCount = 4;
     generatingUinitSize = 16; // 何手で色が均等になるように生成するか
     tsumoColorSet = [];
     moveCount = 0;
-
-    observers = [];
 
     constructor() {
         this._createNewTsumoUnit;
         // TODO 初手が3色以下になるようにツモ補正
     }
-
-    addOvserver(ov) {
-        this.observers.push(ov);
-    } 
 
     // 一手進める
     proceed() {
@@ -417,7 +410,6 @@ export class TsumoGenerator {
         if (this.tsumoColorSet.length < this.moveCount * 2 + 3) {
             this._createNewTsumoUnit();
         }
-        this.observers.forEach(o => o.updateTsumo(this))
     }
 
     /**
@@ -457,8 +449,8 @@ export class TsumoGenerator {
     }
 
     _createNewTsumoUnit() {
-        const colorUnit = [GREEN, RED, BLUE, YELLOW, PURPLE].slice(0, this.colorCount);
-        const repeatCount = Math.floor(this.generatingUinitSize * 2 / this.colorCount);
+        const colorUnit = [GREEN, RED, BLUE, YELLOW, PURPLE].slice(0, puyoColorCount);
+        const repeatCount = Math.floor(this.generatingUinitSize * 2 / puyoColorCount);
         const unitSet = Array(repeatCount).fill(colorUnit).flat();
 
        // Fisher–Yates shuffle
