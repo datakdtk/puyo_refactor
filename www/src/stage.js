@@ -58,7 +58,7 @@ export class Stage {
          */
         const completeSequence = (sequence, x, y) => {
             const col = this.columns[x];
-            if (x < 0 || y < 0 || !col) {
+            if (x < 0 || y < 0 || y > stageRows - 1 || !col) {
                 return; // 画面外なので探索終了
             }
             const puyo = col[y];
@@ -70,7 +70,7 @@ export class Stage {
                 return; // 繋がらなかったので探索終了
             }
 
-            this.columns[x][y] = null; // 寿福チェック防止のため、一度つながったぷよは一旦消す
+            this.columns[x][y] = null; // 重複チェック防止のため、一度つながったぷよは一旦消す
 
             // 上下左右を再起的探索
             completeSequence(sequence, x + 1, y);
