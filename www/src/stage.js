@@ -120,26 +120,6 @@ export class Stage {
     }
 
     /**
-     * ぷよが存在するかどうか
-     * @param {any} x 左端をゼロとする列番号
-     * @param {any} y 最下段をゼロとする行番号
-     */
-    puyoExists(x, y) {
-        const col = this.columns[x];
-        return col && col[y] != null;
-    }
-
-    /**
-     * ぷよが存在するかどうか。縦を上から数えるバージョン
-     * @param {any} x 左端をゼロとする列番号
-     * @param {any} y 最上段をゼロとする行番号
-     */
-    puyoExistsFromTop(x, y) {
-        const col = this.columns[x];
-        return col && col[stageRows - y - 1] != null;
-    }
-
-    /**
      * @returns {boolean} ゲームオーバーならtrueを返す
      */
     isGameOver() {
