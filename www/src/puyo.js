@@ -1,4 +1,4 @@
-import { puyoColorCount, puyoSize, stageCols, stageRows } from "./config.js";
+import { puyoColorCount, puyoSize, stageCols, stageRows, tsumoDroppingSpeed } from "./config.js";
 
 // ぷよの色を表す数字。各色のぷよ画像のファイル名と合わせる
 const GREEN = 1;
@@ -21,8 +21,7 @@ const TURN_LEFT = 2;
 const QUICK_TURN = 3;
 
 // 諸々の設定値
-const tsumoDroppingSpeed = 0.05; // 1フレームでぷよ何個分落下するか
-const fastDroppingRate = 4; // 下方向入力時に落下速度が何倍になるか
+const fastDroppingSpeed= 0.3; // 下方向入力時にツモが1フレームでツモ何個分落下するか
 const tsumoHorizontalMoveSpeed = 0.1; // 左右移動時に1フレームでぷよ何個分ずれるか
 const tsumoTurningFrame = 10; // ぷよが回転し始めてから終了までにかかるフレーム数
 const tsumoGroundingFrameLimit = 32; // ぷよの累計接地時間がこのフレーム数に達すると設置状態になる
@@ -216,7 +215,7 @@ export class Tsumo {
             calculateColumnHeight(stageColumns, this._childPuyoDestinationColumn()),
         );
         const destinationJikuPositionY = this.childPuyoTargetAngle === 270 ? groundHeight - 2 * puyoSize : groundHeight - puyoSize;
-        const moveUnit = this.nowFastDropping ? puyoSize * tsumoDroppingSpeed * fastDroppingRate : puyoSize * tsumoDroppingSpeed;
+        const moveUnit = this.nowFastDropping ? puyoSize * fastDroppingSpeed : puyoSize * tsumoDroppingSpeed;
         this.jikuPositionY += moveUnit;
 
         // 以下接地判定
