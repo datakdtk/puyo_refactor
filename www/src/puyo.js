@@ -82,6 +82,10 @@ export class Tsumo {
         return this._moveVertically(stageColumns);
     }
 
+    jikuRowHeight() {
+        return stageRows - Math.ceil(this.jikuPositionY / puyoSize);
+    }
+
     /**
      * ステージぷよオブジェクトの配列に変換する
      * @returns {StagePuyo[]} 下側に位置するぷよが先になる 

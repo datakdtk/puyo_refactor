@@ -1,8 +1,9 @@
-import { PoppingPuyos, Stage } from "./stage.js";
+﻿import { PoppingPuyos, Stage } from "./stage.js";
 import { KeyboardController } from "./controller.js";
 import { Tsumo, TsumoGenerator } from "./puyo.js";
 import { calculatePoppingScore, zenkeshiBonus } from "./score.js";
 import { Renderer } from "./renderer.js";
+import { stageRows } from "./config.js";
 
 export class Game {
     constructor() {
@@ -49,7 +50,12 @@ class StateTsumoMoving {
     }
 
     process(game) {
+        const oldRowHeight = this.tsumo.jikuRowHeight();
         const continueMoving = this.tsumo.move(game.stage.columns);
+        if (this.tsumo.nowFastDropping && oldRowHeight <= stageRows && this.tsumo.jikuRowHeight() < oldRowHeight) {
+            game._addScore(1); // 落下ボーナス
+        }
+
         this.tsumo.toStagePuyos().forEach(p => game.renderer.updatePuyoPosition(p))
         if (continueMoving) {
             return new StateTsumoMoving(this.tsumo);
