@@ -4,27 +4,20 @@ import { Tsumo, TsumoGenerator } from "./puyo.js";
 import { calculatePoppingScore, zenkeshiBonus } from "./score.js";
 import { Renderer } from "./renderer.js";
 
-class Game {
+export class Game {
     constructor() {
         /** @type {KeyboardController} */
         this.controller = new KeyboardController();
-
         /** @type {Stage} */
         this.stage = new Stage();
-
         /** @type {TsumoGenerator} */
         this.tsumoGenerator = new TsumoGenerator();
 
-        /** @type {Tsumo} */
-        this.currentTsumo = null;
-
-        /** @type {PoppingPuyos} */
-        this.poppingPuyos = null;
+        this.state = new StatePuyoFalling();
 
         this.score = 0;
         this.rensaCount = 0;
         this.frame = 0;
-        this.isGameOver = false;
 
         /** @type {Renderer} */
         this.renderer = new Renderer();
@@ -38,67 +31,7 @@ class Game {
 
     loop() {
         ++this.frame;
-
-        if (this.isGameOver) {
-            this.renderer.renderBatankyuAnimation(this.frame);
-            return;
-        }
-
-        if (this.currentTsumo) {
-            const continueMoving = this.currentTsumo.move(this.stage.columns);
-            this.currentTsumo.toStagePuyos().forEach(p => this.renderer.updatePuyoPosition(p))
-            if (!continueMoving) {
-                this.currentTsumo.toStagePuyos().forEach(p => this.stage.addPuyo(p))
-                this.currentTsumo = null;
-            }
-            return;
-        }
-
-        if (this.poppingPuyos) {
-            this.renderer.renderPoppingAnimation(this.poppingPuyos, this.frame);
-            if (!this.poppingPuyos.finishedPopping(this.frame)) {
-                return;
-            }
-            this.poppingPuyos = null;
-            console.log(this.stage.isZenkeshi());
-            if (this.stage.isZenkeshi()) {
-                this._addScore(zenkeshiBonus);
-                this.renderer.showZenkeshi();
-            }
-        }
-
-        const hasFallen = this.stage.puyosFall();
-        if (hasFallen) {
-            return;
-        }
-        
-        const newPopping = this.stage.checkPoppingPuyos(this.frame);
-        if (newPopping) {
-            this.poppingPuyos = newPopping;
-            this.rensaCount++;
-            const additonalScore = calculatePoppingScore(
-                this.rensaCount,
-                this.poppingPuyos.puyoCount,
-                this.poppingPuyos.colorCount
-            );
-            this._addScore(additonalScore);
-            this.renderer.hideZenkeshi();
-            return;
-        } else {
-            this.rensaCount = 0;
-        }
-
-        if (this.stage.isGameOver()) {
-            this.isGameOver = true;
-            this.renderer.showBatankyuImage();
-            return;
-        }
-
-        this.tsumoGenerator.proceed();
-        this.currentTsumo = this.tsumoGenerator.getCurrentTsumo();
-        this.controller.setCurrentTsumo(this.currentTsumo);
-        this.renderer.updateNextTsumo(this.tsumoGenerator);
-        this.currentTsumo.toStagePuyos().forEach(p => this.renderer.addNewPuyo(p))
+        this.state = this.state.process(this);
     }
 
     _addScore(additionalAmount) {
@@ -107,14 +40,96 @@ class Game {
     }
 }
 
-const g = new Game();
-// 起動されたときに呼ばれる関数を登録する
-function loop() {
-    g.loop();
-    requestAnimationFrame(loop); // 1/60秒後にもう一度呼び出す
+class StateTsumoMoving {
+    /**
+     * @param {Tsumo} tsumo
+     */
+    constructor(tsumo) {
+        this.tsumo = tsumo;
+    }
+
+    process(game) {
+        const continueMoving = this.tsumo.move(game.stage.columns);
+        this.tsumo.toStagePuyos().forEach(p => game.renderer.updatePuyoPosition(p))
+        if (continueMoving) {
+            return new StateTsumoMoving(this.tsumo);
+        }
+        this.tsumo.toStagePuyos().forEach(p => game.stage.addPuyo(p))
+        return new StatePuyoFalling();
+
+    }
 }
 
-window.addEventListener("load", () => {
-    g.firstRender();
-    loop();
-});
+class StatePuyoFalling {
+    process(game) {
+        const hasFallen = game.stage.puyosFall();
+        if (hasFallen) {
+            return new StatePuyoFalling();
+        }
+        
+        const newPopping = game.stage.checkPoppingPuyos(game.frame);
+        if (newPopping) {
+            this._calculatePoppingScore(game, newPopping);
+            return new StatePopping(newPopping);
+        }
+        
+        game.rensaCount = 0;
+
+        if (game.stage.isGameOver()) {
+            game.renderer.showBatankyuImage();
+            return new StateBatankyu();
+        }
+
+        const newTsumo = this._updateTsumo(game);
+        return new StateTsumoMoving(newTsumo);
+
+    }
+
+    _calculatePoppingScore(game, poppingPuyos) {
+        game.rensaCount++;
+        const additonalScore = calculatePoppingScore(
+            game.rensaCount,
+            poppingPuyos.puyoCount,
+            poppingPuyos.colorCount
+        );
+        game._addScore(additonalScore);
+        game.renderer.hideZenkeshi();
+    }
+
+    _updateTsumo(game) {
+        game.tsumoGenerator.proceed();
+        game.renderer.updateNextTsumo(game.tsumoGenerator);
+        const newTsumo = game.tsumoGenerator.getCurrentTsumo();
+        game.controller.setCurrentTsumo(newTsumo);
+        newTsumo.toStagePuyos().forEach(p => game.renderer.addNewPuyo(p))
+        return newTsumo
+    }
+}
+
+class StatePopping {
+    /**
+     * @param {PoppingPuyos} poppingPuyos
+     */
+    constructor(poppingPuyos) {
+        this.poppingPuyos = poppingPuyos;
+    }
+
+    process(game) {
+        game.renderer.renderPoppingAnimation(this.poppingPuyos, game.frame);
+        if (!this.poppingPuyos.finishedPopping(game.frame)) {
+            return new StatePopping(this.poppingPuyos);
+        }
+        if (game.stage.isZenkeshi()) {
+            game._addScore(zenkeshiBonus);
+            game.renderer.showZenkeshi();
+        }
+        return new StatePuyoFalling();
+    }
+}
+
+class StateBatankyu {
+    process(game) {
+        game.renderer.renderBatankyuAnimation(game.frame);
+        return new StateBatankyu();
+    }
+}

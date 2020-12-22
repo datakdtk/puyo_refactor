@@ -5,3 +5,4 @@ export const stageCols = 6;
 export const stageRows = 12;
 
 export const requiredPuyoCountToPop = 4;
+export const puyoColorCount = 4;
