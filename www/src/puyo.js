@@ -1,4 +1,4 @@
-import { puyoColorCount, puyoSize, stageCols, stageRows, tsumoDroppingSpeed } from "./config.js";
+﻿import { puyoColorCount, puyoSize, stageCols, stageRows, tsumoDroppingSpeed } from "./config.js";
 
 // ぷよの色を表す数字。各色のぷよ画像のファイル名と合わせる
 const GREEN = 1;
@@ -401,14 +401,24 @@ function calculateVerticalPuyoPosition(rowHeight) {
 }
 
 
+const orderedColors = [GREEN, RED, BLUE, YELLOW, PURPLE];
 export class TsumoGenerator {
     generatingUinitSize = 16; // 何手で色が均等になるように生成するか
     tsumoColorSet = [];
     moveCount = 0;
 
     constructor() {
-        this._createNewTsumoUnit;
-        // TODO 初手が3色以下になるようにツモ補正
+        this._createNewTsumoUnit();
+        // 最初の2手が3色以下になるようにツモ補正
+        const threeColors = orderedColors.slice(0, 3);
+        for (let i = 0; i < 4; i++) {
+            if (!threeColors.includes(this.tsumoColorSet[i])) {
+                const randomIndex = Math.floor(Math.random() * 3);
+                const newColor = threeColors[randomIndex];
+                console.assert(newColor);
+                this.tsumoColorSet[i] = newColor;
+            }
+        }
     }
 
     // 一手進める
@@ -457,7 +467,7 @@ export class TsumoGenerator {
     }
 
     _createNewTsumoUnit() {
-        const colorUnit = [GREEN, RED, BLUE, YELLOW, PURPLE].slice(0, puyoColorCount);
+        const colorUnit = orderedColors.slice(0, puyoColorCount);
         const repeatCount = Math.floor(this.generatingUinitSize * 2 / puyoColorCount);
         const unitSet = Array(repeatCount).fill(colorUnit).flat();
 
