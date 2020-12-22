@@ -190,6 +190,7 @@ export class Tsumo {
 
         if (this.turnDirection === TURN_LEFT) {
             this._addCurrentAngle(unitAngle);
+            // unitAngleの小数点誤差による回りすぎの補正
             if (this.childPuyoTargetAngle === 0) {
                 this.childPuyoCurrentAngle = this.childPuyoCurrentAngle < 90 ? 0 : this.childPuyoCurrentAngle;
             } else {
@@ -197,10 +198,14 @@ export class Tsumo {
             }
         } else {
             this._addCurrentAngle(-1 * unitAngle);
-            this.childPuyoCurrentAngle = Math.max(this.childPuyoTargetAngle, this.childPuyoCurrentAngle);
-            // 永遠に回り続けてしまうのを防ぐため、目標角度が0°の場合は第4象限にはみ出したら手動で誤差修正。
-            if (this.childPuyoTargetAngle === 0 && this.childPuyoCurrentAngle > 270) {
-                this.childPuyoCurrentAngle = 0;
+
+            // クイックターンがあるので、単純な大小比較で回りすぎを検知できない
+            const over0 = this.childPuyoTargetAngle === 0 && this.childPuyoCurrentAngle > 270;
+            const over90 = this.childPuyoTargetAngle === 90 && this.childPuyoCurrentAngle < 90;
+            const over180 = this.childPuyoTargetAngle === 180 && this.childPuyoCurrentAngle < 180;
+            const over270 = this.childPuyoTargetAngle === 270 && this.childPuyoCurrentAngle < 270 && this.childPuyoCurrentAngle > 180;
+            if (over0 || over90 || over180 || over270) {
+                this.childPuyoCurrentAngle = this.childPuyoTargetAngle;
             }
         }
     }
