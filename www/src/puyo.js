@@ -74,6 +74,10 @@ export class Tsumo {
         this.commandQueue.push(command);
     }
 
+    /**
+     * @param {Array[]} stageColumns ステージに配置されたぷよ情報。詳しくはStageクラス参照
+     * @returns {boolean} 落下や接地など、ツモの動作が完全に完了したらfalseを返す
+     */
     move(stageColumns) {
         this._processCommands(stageColumns);
         this._moveHorizontally();
